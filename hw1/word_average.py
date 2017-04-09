@@ -56,16 +56,53 @@ graph.output(sigmoid)
 epochs = 100
 batch_size = 50
 
-for epoch_idx in range(epochs):
-    # Train
+def train():
     loss_sum = 0.0
-    counter = 0
+    batch_counter = 0
     for batch in train_ds.batches(batch_size):
         input_node.value = batch.data
         graph.expect(np.float64(batch.expect).reshape(-1, 1))
         loss, accuracy = graph.train()
         loss_sum += loss
-        counter += 1
-    print(loss_sum / counter)    
-    # Test on Dev    
+        batch_counter += 1
+    return loss_sum / batch_counter
+
+def evaluate():
+    loss_sum = 0.0
+    batch_counter = 0
+    for batch in dev_ds.batches(batch_size):
+        input_node.value = batch.data
+        graph.expect(np.float64(batch.expect).reshape(-1, 1))
+        loss, accuracy = graph.test()
+        loss_sum += loss
+        batch_counter += 1
+    return loss_sum / batch_counter
     
+def test():
+    acc_sum = 0
+    item_counter = 0
+    for batch in test_ds.batches(batch_size):
+        input_node.value = batch.data
+        graph.expect(np.float64(batch.expect).reshape(-1, 1))
+        loss, accuracy = graph.test()
+        acc_sum += accuracy
+        item_counter += batch.size
+    return acc_sum / item_counter    
+    
+best_dev = np.finfo.max
+
+for epoch_idx in range(epochs):
+    # Train
+    train_loss = train(train_ds)
+    print("Epoch " + epoch_idx + ", training Loss is" + train_loss)    
+    # Eval on Dev    
+    dev_loss = evaluate(dev_ds)
+    print("Dev loss is " + dev_loss)
+    if(dev_loss < best_dev):
+        best_dev = dev_loss
+    else:
+        # Early stop
+        break
+
+test_accuracy = test()
+print("Test accuracy is " + test_accuracy)
