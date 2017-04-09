@@ -10,7 +10,7 @@ dev_file = "data/senti.binary.dev"
 test_file = "data/senti.binary.test"
 
 # Word Vector Dimension
-wv_dim = 200
+wv_dim = 100
 word_dict = {}
 
 def load(file_name):
@@ -79,7 +79,7 @@ def evaluate():
     return loss_sum / batch_counter
     
 def test():
-    acc_sum = 0
+    acc_sum = 0.0
     item_counter = 0
     for batch in test_ds.batches(batch_size):
         input_node.value = batch.data
@@ -89,15 +89,15 @@ def test():
         item_counter += batch.size
     return acc_sum / item_counter    
     
-best_dev = np.finfo.max
+best_dev = np.finfo(np.float64).max
 
 for epoch_idx in range(epochs):
     # Train
-    train_loss = train(train_ds)
-    print("Epoch " + epoch_idx + ", training Loss is" + train_loss)    
+    train_loss = train()
+    print("Epoch {0:d}, training Loss is {1:f}".format(epoch_idx, train_loss))    
     # Eval on Dev    
-    dev_loss = evaluate(dev_ds)
-    print("Dev loss is " + dev_loss)
+    dev_loss = evaluate()
+    print("Dev loss is {0:f}".format(dev_loss))
     if(dev_loss < best_dev):
         best_dev = dev_loss
     else:
@@ -105,4 +105,4 @@ for epoch_idx in range(epochs):
         break
 
 test_accuracy = test()
-print("Test accuracy is " + test_accuracy)
+print("Test accuracy is {0:f}".format(test_accuracy))
