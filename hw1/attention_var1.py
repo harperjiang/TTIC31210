@@ -10,22 +10,11 @@ train_file = "data/senti.binary.train"
 dev_file = "data/senti.binary.dev"
 test_file = "data/senti.binary.test"
 
-word_embed_file = "/home/harper/Downloads/glove.840B.300d.txt"
-
-class WordEmbedDict:
-    def __init__(self):
-        pass
-    
-    def lookup(self):
-        pass
-
-dict = WordEmbedDict()
-
 model_file = "attention_var1.mdl"
 store = nst.ParamStore(model_file)
 
 # Word Vector Dimension
-wv_dim = 100
+wv_dim = 300
 word_dict = {}
 
 def load(file_name):
@@ -55,10 +44,44 @@ dev_ds = nds.VarLenDataSet(dev_embed, dev_label)
 test_ds = nds.VarLenDataSet(test_embed, test_label)
 
 # Build Computation Graph
-graph = ng.Graph(nl.LogLoss(), ns.SGD(eta=0.001))
+graph = ng.Graph(nl.LogLoss(), ns.SGD(eta=0.01))
 
-# Word Embedding Matrix using Xavier
+# Word Embedding Matrix from dict 
 word_embedding = graph.param_of([len(word_dict), wv_dim])
+
+word_embed_file = "/home/harper/Downloads/glove.840B.300d.txt"
+
+class WordEmbedDict:
+    def __init__(self):
+        self.buffer = {}
+    
+    def load(self, keyset):
+        lines = open(word_embed_file, "rb").readlines()
+        for line in lines:
+            pieces = line.split()
+            if pieces[0] in keyset:
+                self.buffer[pieces[0]] = np.array(pieces[1:])
+
+    def lookup(self, key):
+        return self.buffer.get(key)
+
+embed_dict = WordEmbedDict()
+
+init_model_file = "attention_var1_init.mdl"
+init_store = nst.ParamStore(init_model_file)
+we_stored = init_store.load()
+
+if we_stored is not None:
+    word_embedding.value = we_stored[0]
+else:
+    embed_dict.load(word_dict)
+    for word in word_dict:
+        idx = word_dict[word]
+        embed = embed_dict.lookup(word.lower())
+        if embed is not None:
+            word_embedding.value[idx, :] = embed
+    init_store.store([word_embedding.value])
+    
 # Weight vector
 weight = graph.param_of([wv_dim, 1])
 attention_weight = graph.param_of([wv_dim])
