@@ -46,7 +46,7 @@ dev_ds = nds.VarLenDataSet(dev_embed, dev_label)
 test_ds = nds.VarLenDataSet(test_embed, test_label)
 
 # Build Computation Graph
-graph = ng.Graph(nl.LogLoss(), ns.SGD(eta=0.005))
+graph = ng.Graph(nl.LogLoss(), ns.SGD(eta=0.05))
 
 # Word Embedding Matrix using Xavier
 word_embedding = graph.param_of([len(word_dict), wv_dim])
@@ -70,12 +70,12 @@ class EmbedMap(nd.Node):
     def compute(self):
         self.raw = np.einsum("bld,d->bl", self.embed.value, self.weight.value)
         l = self.embed.value.shape[1]
-        self.expand = np.array([self.rel_pos[int(relative_len * i / l)] for i in range(l)])
+        self.expand = np.array([self.rel_pos.value[int(relative_len * i / l)] for i in range(l)])
         return self.raw * self.expand
 
     def updateGrad(self):
         l = self.embed.value.shape[1]
-        grad = self.grad * self.expand
+        grad = self.grad * self.expand.reshape(-1, l)
         self.embed.grad += np.einsum("bl,d->bld", grad, self.weight.value)
         self.weight.grad += np.einsum("bl,bld->d", grad, self.embed.value)
         expand_grad = self.raw * self.grad.sum(axis=0)
