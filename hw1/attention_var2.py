@@ -73,20 +73,19 @@ class EmbedMap(nd.Node):
         raw_padded[:, 2:-2] = raw
 
         for i in range(l):
-            res[:, i] = np.matmul(raw_padded[:, i:i + 5], self.window)
+            res[:, i] += np.matmul(raw_padded[:, i:i + 5], self.window)
         return res
 
     def updateGrad(self):
-
         # convolution
         b = self.grad.shape[0]
         l = self.grad.shape[1]
         padded_grad = np.zeros([b, l + 4])
-        padded_grad[2:-2] = self.grad
+        padded_grad[:, 2:-2] = self.grad
         grad = np.zeros_like(self.grad)
 
         for i in range(l):
-            grad[:, i] = np.matmul(padded_grad[:, i:i + 5], self.window)
+            grad[:, i] += np.matmul(padded_grad[:, i:i + 5], self.window)
 
         self.embed.grad += np.einsum("bl,d->bld", grad, self.weight.value)
         self.weight.grad += np.einsum("bl,bld->d", grad, self.embed.value)
