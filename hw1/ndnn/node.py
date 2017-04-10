@@ -213,23 +213,11 @@ class Average(Node):
         self.x = x
     
     def compute(self):
-        if type(self.x.value) is np.ndarray:
-            return self.x.value.mean(axis=0)
-        else:
-            list_mean = [item.mean(axis=0) for item in self.x.value]
-            return np.array(list_mean)
-    
+        return self.x.value.mean(axis=1)
+        
     def updateGrad(self):
-        if type(self.x.value) is np.ndarray:
-            self.x.grad += np.repeat(self.grad.reshape([1, -1]),
-                                     self.x.shape[0], axis=0)
-        else:
-            list_size = self.grad.shape[0]
-            grad_list = [self.grad[i, :].reshape(1, -1) for i in range(list_size)]
-            self.x.grad = []
-            for i, grad in enumerate(grad_list):
-                size = self.x.value[i].shape[0]
-                self.x.grad.append(np.repeat(grad.reshape(1, -1), size, axis=0)) 
+        self.x.grad += np.repeat(self.grad[:, np.newaxis, :],
+                                     self.x.value.shape[1], axis=1)
             
 class Embed(Node):
     def __init__(self, idx, w2v):
@@ -238,24 +226,13 @@ class Embed(Node):
         self.w2v = w2v
 
     def compute(self):
-        hidden_dim = self.w2v.value.shape[1]
-        
-        if type(self.idx.value) is np.ndarray:
-            return self.w2v.value[np.int32(self.idx.value), :].reshape(-1, hidden_dim)
-        else:
-            return [self.w2v.value[np.int32(i), :].reshape(-1, hidden_dim) for i in self.idx.value]
+        return self.w2v.value[np.int32(self.idx.value), :]
         
     def updateGrad(self):
-        if type(self.idx.value) is np.ndarray:
-            grad = np.zeros_like(self.w2v.value)
-            grad[np.int32(self.idx.value), :] += self.grad
-            self.w2v.grad += grad
-        else:
-            grad = np.zeros_like(self.w2v.value)
-            for i, item in enumerate(self.idx.value):
-                grad[np.int32(item),:]+= self.grad[i]
-            self.w2v.grad += grad
-
+        grad = np.zeros_like(self.w2v.value)
+        grad[np.int32(self.idx.value), :] += self.grad
+        self.w2v.grad += grad
+        
 class ArgMax(Node):
     def __init__(self, x):
         super(ArgMax, self).__init__([x])

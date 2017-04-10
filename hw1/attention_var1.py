@@ -10,7 +10,18 @@ train_file = "data/senti.binary.train"
 dev_file = "data/senti.binary.dev"
 test_file = "data/senti.binary.test"
 
-model_file = "attention.mdl"
+word_embed_file = "/home/harper/Downloads/glove.840B.300d.txt"
+
+class WordEmbedDict:
+    def __init__(self):
+        pass
+    
+    def lookup(self):
+        pass
+
+dict = WordEmbedDict()
+
+model_file = "attention_var1.mdl"
 store = nst.ParamStore(model_file)
 
 # Word Vector Dimension
@@ -44,7 +55,7 @@ dev_ds = nds.VarLenDataSet(dev_embed, dev_label)
 test_ds = nds.VarLenDataSet(test_embed, test_label)
 
 # Build Computation Graph
-graph = ng.Graph(nl.LogLoss(), ns.SGD(eta=0.01, decay=0.95))
+graph = ng.Graph(nl.LogLoss(), ns.SGD(eta=0.001))
 
 # Word Embedding Matrix using Xavier
 word_embedding = graph.param_of([len(word_dict), wv_dim])

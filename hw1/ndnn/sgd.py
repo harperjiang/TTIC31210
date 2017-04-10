@@ -15,7 +15,7 @@ rmsEpsilon = 1e-8
 adammeanKey = "adammean"
 adamvarKey = "adamvar"
 adamAlpha = 0.9
-adamBeta = 0.9
+adamBeta = 0.999
 
 
 class UpdatePolicy(object):

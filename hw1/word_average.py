@@ -4,11 +4,14 @@ import ndnn.graph as ng
 import ndnn.loss as nl
 import ndnn.sgd as ns
 import ndnn.dataset as nds
+import ndnn.store as nst
 
 train_file = "data/senti.binary.train"
 dev_file = "data/senti.binary.dev"
 test_file = "data/senti.binary.test"
 
+model_file = "word_avg.mdl"
+store = nst.ParamStore(model_file)
 # Word Vector Dimension
 wv_dim = 100
 word_dict = {}
@@ -35,11 +38,11 @@ train_embed, train_label = load(train_file)
 dev_embed, dev_label = load(dev_file)
 test_embed, test_label = load(test_file)
 
-train_ds = nds.DataSet(train_embed, train_label)
-dev_ds = nds.DataSet(dev_embed, dev_label)
-test_ds = nds.DataSet(test_embed, test_label)
+train_ds = nds.VarLenDataSet(train_embed, train_label)
+dev_ds = nds.VarLenDataSet(dev_embed, dev_label)
+test_ds = nds.VarLenDataSet(test_embed, test_label)
 # Build Computation Graph
-graph = ng.Graph(nl.LogLoss(), ns.SGD())
+graph = ng.Graph(nl.LogLoss(), ns.SGD(eta=0.01))
 
 # Word Embedding Matrix using Xavier
 word_embedding = graph.param_of([len(word_dict), wv_dim])
@@ -79,7 +82,7 @@ def evaluate():
     return loss_sum / batch_counter
     
 def test():
-    acc_sum = 0.0
+    acc_sum = 0
     item_counter = 0
     for batch in test_ds.batches(batch_size):
         input_node.value = batch.data
@@ -91,6 +94,17 @@ def test():
     
 best_dev = np.finfo(np.float64).max
 
+# Load parameters if exists
+params = store.load()
+if params is not None:
+    word_embedding.value = params[0]
+    weight.value = params[1]
+
+dev_loss = evaluate()
+print("Initial Dev Loss is {0:f}".format(dev_loss))
+test_accuracy = test()
+print("Initial Test accuracy is {0:f}".format(test_accuracy))
+
 for epoch_idx in range(epochs):
     # Train
     train_loss = train()
@@ -98,11 +112,18 @@ for epoch_idx in range(epochs):
     # Eval on Dev    
     dev_loss = evaluate()
     print("Dev loss is {0:f}".format(dev_loss))
+    
+    test_accuracy = test()
+    print("Test accuracy is {0:f}".format(test_accuracy))
+    
+    
     if(dev_loss < best_dev):
         best_dev = dev_loss
+        # Save Model
+        store.store([word_embedding.value, weight.value])
     else:
-        # Early stop
-        break
+        # Early stop?
+        pass
 
 test_accuracy = test()
 print("Test accuracy is {0:f}".format(test_accuracy))
