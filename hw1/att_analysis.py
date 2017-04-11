@@ -52,18 +52,23 @@ for line in lines:
 
     for idx, word in enumerate(words):
         word_variance[word].append(softmax[idx])
-        
-variances = []        
+    
+stats = []    
         
 for w in word_variance:
     data = word_variance[w]
+    mean = np.mean(data)
     var = np.var(data)
-    variances.append((var, w))
     
-variances.sort(key=lambda x:x[0])
+    stats.append((mean, var, w))
+    
+stats.sort(key=lambda x:x[0])
 
-print(variances[:5])
-print(variances[-5:])
+print(stats[:10])
+print(stats[-10:])
+
+stats.sort(key=lambda x:x[1])
+print(stats[:10])
 
 
 
