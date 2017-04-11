@@ -1,6 +1,6 @@
 import re
 
-log_file = "word_avg.log"
+log_file = "/home/harper/attention_var1.log"
 
 entries = []
 entry = None

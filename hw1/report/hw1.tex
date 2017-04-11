@@ -1,0 +1,191 @@
+%%This is a very basic article template.
+%%There is just one section and two subsections.
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{parskip}
+\usepackage{xcolor} 
+\usepackage{cleveref}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+\setlength{\parskip}{0.3cm} 
+\setlength{\voffset}{-3cm}
+\setlength{\textheight}{9.5in}
+\title{TTIC 31210 Homework 1 \\ Spr 2017}
+
+\author{Hao Jiang}
+\begin{document}
+
+\maketitle
+
+\section{Word Average Sentence Classifier}
+\subsection{Exposition}
+Given a sentence of $N$ words $w_1, w_2,\ldots,w_N$, the simple word average sentence classifier is defined by the following formula
+\[
+\mathbb{P}(c=1) = \text{Sigmoid}(\frac{1}{N}(\sum_{i=1}^N \text{Embed}(w_i))\cdot \textbf{v})
+\],
+where Embed is word embedding function that converts a given word to $\mathbb{R}^d$, $\textbf{v}\in \mathbb{R}^d$ a parameter, $d$ a hyperparameter describing the size of embedding.
+
+The function Embed is computed using a word embedding matrix $E$ of size $W\times d$, where $W$ is the vocabulary size. Each word $w_i$ is assigned a unique index $i$, and the corresponding embedding is the $i$-th column vector in $E$. $E$ is also a parameter that will be learned during the training process.
+
+To learn the parameter $E$ and $\textbf{v}$, we use cross-entropy loss function for the sigmoid classifier, which is defined as following
+\[
+L(x) = - c\log(x) - (1-c)\log(1-x)
+\], where $x$ is the result from the $Sigmoid$ function described above, $c\in {0,1}$ is the class label.
+\subsection{Implementation}
+I attach the code I use to implement this classifier. The implementation is based on my own ML framework. It includes the main program file \texttt{word\_average.py} and library files under folder \texttt{ndnn/}.
+
+The parameters are inited with Xavier, and the plain old SGD is used to update the parameters. The learning rate is set to be 0.01 and decay is 0.95. I also use mini-batching, which groups sentences of the same length together.
+\subsection{Experimentation}
+I set the word embedding dimension $d$ to be 300 in this experiment. \Cref{fig:wordavg} shows the result. The final test accuracy after 100 epoches is \textbf{0.8182}. It can be seen from the figure that Dev loss stop decreasing after 40 epoches, however it didn't increase much either. So it didn't trigger early stopping.
+\begin{figure}
+\centering
+\begin{tikzpicture}
+\begin{axis}[legend entries={Training loss, Dev loss, Test Accuracy},
+legend style={at={(1,1)},anchor=north west}, xlabel={Epoch}]
+\addplot[mark = none,red] table[x=i,y=train] {word_avg.dat};
+\addplot[mark = none, blue] table[x=i,y=dev] {word_avg.dat};
+\addplot[mark = none, black] table[x=i,y=test] {word_avg.dat};
+\end{axis}
+\end{tikzpicture}
+\caption{Training of Simple Word Average Classifier}
+\label{fig:wordavg}
+\end{figure}
+\subsection{Analysis}
+The word with largest norm is ``worst'', with norm 3.107.
+The word with smallest norm is ``Told'', with norm 0.114.
+
+In \Cref{tab:topwords}, we also list the top 10 words with largest norms, and top 10 words with smallest norms.
+\begin{table}
+\begin{tabular}{c|c|c|c|c}
+\textbf{Index} & \textbf{Largest Word} & \textbf{Largest Value} & \textbf{Smallest Word} & \textbf{Smallest Value}\\
+1 &worst&3.10 &Told&0.11\\
+2 &bad&2.91&Beneath&0.11\\
+3 &love&2.23&laptops&0.11\\
+4 &dull&2.10&Halos&0.11\\
+5 &enjoyable&2.09&worship&0.12\\
+6 &too&2.07&deliriously&0.12\\
+7 &heart&1.96&screens&0.12\\
+8 &best&1.88&re-creation&0.12\\
+9 &no&1.87&Yang&0.12\\
+10 &flat&1.87&abilities&0.12\\
+\end{tabular}
+\caption{Top 10 words with largest and smallest norms}
+\label{tab:topwords}
+\end{table}
+An intuitive explanation is that for the words with obvious emotional inclination, e.g., ``good'' or ``bad'', the norm will be larger, while for neutral words the norm will be smaller.
+
+\section{Attention-Augmented Word Avreaging}
+\subsection{Exposition}
+The attention-augmented word averaging classifier is described as following:
+\begin{align}\label{formu:att}
+P(c=1) = \text{Sigmoid}(\text{SoftMax}(W \textbf{v})^TW \textbf{w})
+\end{align}
+
+$W = [Embed(w_1), Embed(w_2), \ldots Embed(w_N)]$ is a matrix of size $N\times d$, where Embed is the same as above, $N$ is the sentence length, and $d$ is the hyperparameter controlling the word embedding dimension. $\textbf{v}$ and $\textbf{w}$ are both parameter vectors of length $d$. In the training process, we need to learn the word embedding matrix $E$, as well as $\textbf{v}$ and $\textbf{w}$.
+\subsection{Implementation and Experimentation}
+The implementation is in \texttt{attention.py}. We again set the embedding dimension to 300, learning rate to 0.05 and decay to 0.95, and run 100 epoches. The experiment result is shown in \Cref{fig:attention}
+\begin{figure}
+\centering
+\begin{tikzpicture}
+\begin{axis}[legend entries={Training loss, Dev loss, Test Accuracy},
+legend style={at={(1,1)},anchor=north west}, xlabel={Epoch}]
+\addplot[mark = none,red] table[x=i,y=train] {attention.dat};
+\addplot[mark = none, blue] table[x=i,y=dev] {attention.dat};
+\addplot[mark = none, black] table[x=i,y=test] {attention.dat};
+\end{axis}
+\end{tikzpicture}
+\caption{Training of Attention-Augmented Word Average Classifier}
+\label{fig:attention}
+\end{figure}
+The best test accuracy is \textbf{0.7721}, which is worse than the baseline. Around epoch 60, the dev loss begin increasing and early stopping is triggered.
+\subsection{Analysis}
+Examples of words with small, low-variance attention weights include \textbf{robots, Build, hovering, riddles, paycheck} 
+Examples of words with large, low-variance attention weights include \textbf{Crummy, Rewarding, ROCKS, Imperfect, Weird}
+Examples of words with high-variance attention weights include \textbf{Schnieder, Wanders, Butterfingered, Criminal, Posey, Passionate, Ki-Deok} 
+
+These words have one thing in common: their frequency in the training text is very low. All the words appear only once or twice in the training text, which lead to the extreme distribution of the variance.
+ 
+
+\section{Enriching Attention Function}
+I tried three variations of attention augmented model, of which the details are described below. In all three cases, I didn't observe obvious change on the variation distribution of words. Words that appear only one or two times still dominate.
+\subsection{Use Pre-trained Word Embedding}
+Instead of training from scratch, I use pretrained word embedding from the Glove project of Stanford NLP group. The dataset contains 1.9 million words trained from text corpus containing 840 billion words. The code is in \texttt{attention\_var1.py} and the experiment result is shown in \Cref{fig:var1}. The training early stopped at around 30 epoches and achieves a test accuracy of \textbf{0.7699}
+\begin{figure}
+\centering
+\begin{tikzpicture}
+\begin{axis}[legend entries={Training loss, Dev loss, Test Accuracy},
+legend style={at={(1,1)},anchor=north west}, xlabel={Epoch}]
+\addplot[mark = none,red] table[x=i,y=train] {var1.dat};
+\addplot[mark = none, blue] table[x=i,y=dev] {var1.dat};
+\addplot[mark = none, black] table[x=i,y=test] {var1.dat};
+\end{axis}
+\end{tikzpicture}
+\caption{Training of Attention Variation 1 Classifier}
+\label{fig:var1}
+\end{figure}
+\subsection{Use Nearby Words}
+When computing the attention weight of a word, I tries to take the nearby words into account. To do this, before applying SoftMax on $W\textbf{v}$ in \Cref{formu:att} to compute the attention weight, I convolve a mask $g = [0.1,0.2,0.4,0.2,0.1]$ with each row vector of $W\textbf{v}$, then apply SoftMax on the convolution result. 
+\[
+P(c=1) = \text{Sigmoid}(\text{SoftMax}(\text{Conv}(W \textbf{v},g))^TW \textbf{w})
+\]
+ The code is in \texttt{attention\_var2.py} and the experiment result is shown in \Cref{fig:var2}.
+\begin{figure}
+\centering
+\begin{tikzpicture}
+\begin{axis}[legend entries={Training loss, Dev loss, Test Accuracy},
+legend style={at={(1,1)},anchor=north west}, xlabel={Epoch}]
+\addplot[mark = none,red] table[x=i,y=train] {var2.dat};
+\addplot[mark = none, blue] table[x=i,y=dev] {var2.dat};
+\addplot[mark = none, black] table[x=i,y=test] {var2.dat};
+\end{axis}
+\end{tikzpicture}
+\caption{Training of Attention Variation 2 Classifier}
+\label{fig:var2}
+\end{figure}
+It can be seen that the training process early stopped at around 30 epoches and achieves test accuracy of \textbf{0.7935}.
+
+\subsection{Use Relative Position of the Word in Sentence}
+I introduce a parameter vector $\textbf{r}$ to describe how the relative positon of a word in a sentence could affect the classification. The length of $\textbf{r}$ is a fixed number $L$. Given $W\textbf{v}$ of size $N$, we expand $\textbf{r}$ to length N and do a elementwise-multiplication with $W\textbf{v}$. \Cref{algo:expand} describes how the Expand function works and thus the following formular describes the classifier
+ \[
+P(c=1) = \text{Sigmoid}(\text{SoftMax}((W \textbf{v}\otimes\text{Expand}(\textbf{r},N)))^TW \textbf{w})
+\]
+
+\begin{algorithm}
+\begin{algorithmic}
+\Function{Expand}{r, N}
+\State res = Array(N)
+\State L = r.length
+\For i = 0 to N-1
+\State res[i] = r[floor(i*L/N)]
+\EndFor
+\Return res
+\EndFunction
+\end{algorithmic}
+\caption{Expand Function}
+\label{algo:expand}
+\end{algorithm}
+
+
+
+\begin{figure}
+\centering
+\begin{tikzpicture}
+\begin{axis}[legend entries={Training loss, Dev loss, Test Accuracy},
+legend style={at={(1,1)},anchor=north west}, xlabel={Epoch}]
+\addplot[mark = none,red] table[x=i,y=train] {var3.dat};
+\addplot[mark = none, blue] table[x=i,y=dev] {var3.dat};
+\addplot[mark = none, black] table[x=i,y=test] {var3.dat};
+\end{axis}
+\end{tikzpicture}
+\caption{Training of Attention Variation 3 Classifier}
+\label{fig:var3}
+\end{figure}
+
+The code is in \texttt{attention\_var3.py} and the experiment result is shown in \Cref{fig:var3}.
+The training process early stopped at around 80 epoches and achieves a test accuracy of \textbf{0.7699}.
+\end{document}
