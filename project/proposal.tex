@@ -25,20 +25,18 @@
 \section{Introduction}
 
 My research direction is database. I am currently working on
-efficient lightweight encoding for data columns. Lightweight encoding schemas
-are lossless compression algorithms that allowing a data column to be stored
+efficient lightweight encoding for data columns. Lightweight encoding algorithms
+are lossless compression algorithms that allows data columns to be stored
 in compacted form while still allowing direct predicate operations on the
 records without decompression. Some popular lightweight encoding schemas are
 Bit-packing, Dictionary, Run-Length and Delta.
 
-In some cases, data column has inner structures that allows more efficient
+Some data columns have inner structures that allow more efficient
 encoding schemes. In \Cref{fig:example}, we have demonstrated an example. Each
 record in the column consists of a two-character string header and an integer.
-There's no good encoding method for this type of composite data and we store it
-in plain string format, which takes 256 bits. However, if we discover the
-structure hidden in data and encode each part separately, the space consumption
-can be reduced by over 50\%. Thus the ability of extracting patterns from data
-columns greatly increase the efficiency of encoding method.
+It takes 256 bits if we store it in plain string format. However, if we
+encode each part separately, the space consumption can be reduced by over 50\%.
+Discovering patterns from data columns thus allows more efficient encodings.
 
 \begin{figure}
 \centering
@@ -57,16 +55,17 @@ at(2.5cm, -1.5cm) {12312 \\ 2324 \\ 323423 \\ 45345};
 \label{fig:example}
 \end{figure}
 
-
-LSTM model with attention has been widely used in sequence-to-sequence
-translation. In \cite{grammar_2014}, the authors build a LSTM model to infer grammar
-structure from sentences. Inspired by this work, we want to use LSTM with
-attention model to infer pattern from column data.
+We define the pattern to be a tree-like structure consisting of token types. Valid
+token types include NUM, WORD and SYMBOL. LSTM model with attention has been widely
+used in sequence-to-sequence translation. In \cite{grammar_2014}, the authors build
+a LSTM model to infer grammar structure from sentences. Grammar structure is very similar
+to the pattern structure we are dealing with. Inspired by this work, we want to use
+LSTM with attention model to infer pattern from data.
 
 \section{Dataset and Evaluation}
-We have collected a dataset consisting of raw data columns. We prepare
-the training dataset by applying existing pattern extractors like
-PADS\cite{pads_2008} to data columns.
+We have collected a dataset consisting of 20K data columns. We prepare
+the training dataset by applying existing pattern extractors such as
+PADS\cite{pads_2008} to data columns to obtain pattern for each record.
 
 \section{Methods}
 
@@ -75,7 +74,7 @@ the tree-like pattern to sequencial structure, we are able to directly apply the
 LSTM-with-attention model to it. For a given data columns, we will generate a
 pattern for each record in the column and choose the most common one as final result.
 
-Same as in homework 1, I plan to use the deeplearning toolkit developed by
+Same as in homework 1, I plan to use the deep learning toolkit developed by
 myself based on Nd4j. 
 \section{Key Experiment}
 We evaluate the method by compare its result to the one generated from PADS.
