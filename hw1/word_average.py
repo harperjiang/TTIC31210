@@ -42,7 +42,7 @@ train_ds = nds.VarLenDataSet(train_embed, train_label)
 dev_ds = nds.VarLenDataSet(dev_embed, dev_label)
 test_ds = nds.VarLenDataSet(test_embed, test_label)
 # Build Computation Graph
-graph = ng.Graph(nl.LogLoss(), ns.SGD(eta=0.01))
+graph = ng.Graph(nl.LogLoss(), ns.Adam(eta=0.01))
 
 # Word Embedding Matrix using Xavier
 word_embedding = graph.param_of([len(word_dict), wv_dim])

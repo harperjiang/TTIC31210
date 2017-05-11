@@ -12,7 +12,10 @@
 \usepackage{pgfplots}
 \usetikzlibrary{plotmarks}
 \setlength{\parskip}{0.2cm}
-
+\setlength{\voffset}{-2cm}
+\setlength{\textwidth}{14cm}
+\setlength{\textheight}{25cm}
+\setlength{\hoffset}{-1cm}
 \title{TTIC31210 Project Proposal \\ 
 \vspace{2mm} 
 \Large{Pattern as a Foreign Language}}
@@ -27,11 +30,11 @@
 My research direction is database. I am currently working on
 efficient lightweight encoding for data columns. Lightweight encoding algorithms
 are lossless compression algorithms that allows data columns to be stored
-in compacted form while still allowing direct predicate operations on the
+in compact form while still allowing direct predicate operations on the
 records without decompression. Some popular lightweight encoding schemas are
 Bit-packing, Dictionary, Run-Length and Delta.
 
-Some data columns have inner structures that allow more efficient
+Some data columns have patterns that allow more efficient
 encoding schemes. In \Cref{fig:example}, we have demonstrated an example. Each
 record in the column consists of a two-character string header and an integer.
 It takes 256 bits if we store it in plain string format. However, if we
@@ -63,8 +66,8 @@ to the pattern structure we are dealing with. Inspired by this work, we want to 
 LSTM with attention model to infer pattern from data.
 
 \section{Dataset and Evaluation}
-We have collected a dataset consisting of 20K data columns. We prepare
-the training dataset by applying existing pattern extractors such as
+We have collected a dataset consisting of 10K data columns and 200M records. We
+prepare the training dataset by applying existing pattern extractors such as
 PADS\cite{pads_2008} to data columns to obtain pattern for each record.
 
 \section{Methods}
@@ -77,12 +80,12 @@ pattern for each record in the column and choose the most common one as final re
 Same as in homework 1, I plan to use the deep learning toolkit developed by
 myself based on Nd4j. 
 \section{Key Experiment}
-We evaluate the method by compare its result to the one generated from PADS.
+We evaluate the method by comparing its result to the one generated from PADS.
 We also plan to manually observe the output and make some analysis. The
 following evaluations are taken into consideration:
 \begin{enumerate}
-  \item Error rate. That is, the number of records that cannot fit into the
-  generated pattern.
+  \item Error rate. This is the number of records in a data column that cannot
+  fit into the generated pattern.
   \item Encoded size compared to PADS. The encoded size is computed by sum up
   the pattern size and the record size after encoding.
 \end{enumerate}
