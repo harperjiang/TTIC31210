@@ -16,13 +16,14 @@ class Loss(object):
         return self.acc
 
 
-class EmptyLoss(Loss):
+class TrivialLoss(Loss):
     def __init__(self):
         super().__init__()
 
     def loss(self, actual, expect, fortest):
-        self.grad = None
-        return None
+        if not fortest:
+            self.grad = np.ones_like(actual)    
+        return actual
 
 
 class SquareLoss(Loss):

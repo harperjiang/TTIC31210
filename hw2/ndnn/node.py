@@ -198,15 +198,13 @@ class Collect(Node):
         self.nodes = nodes
 
     def compute(self):
-        withNewAxis = [n.value[np.newaxis, :] for n in self.nodes]
-        return np.concatenate(withNewAxis, 0)
+        withNewAxis = [n.value[:, np.newaxis] for n in self.nodes]
+        return np.concatenate(withNewAxis, 1)
 
     def updateGrad(self):
-        idx = 0
-        for n in self.nodes:
-            n.grad += self.grad[idx, :]
-            idx += 1
-
+        for idx, n in enumerate(self.nodes):
+            n.grad += self.grad[:, idx]
+            
 class Average(Node):
     def __init__(self, x):
         super(Average, self).__init__([x])

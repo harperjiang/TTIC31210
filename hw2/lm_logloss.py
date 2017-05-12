@@ -1,7 +1,8 @@
 
 import numpy as np
 import ndnn
-from dict import get_dict
+from time import time
+from vocab_dict import get_dict
 from ndnn.dataset import LSTMDataSet
 from ndnn.graph import Graph
 from ndnn.init import Xavier, Zero
@@ -17,9 +18,7 @@ test_ds = LSTMDataSet(vocab_dict, idx_dict, "bobsue-data/bobsue.lm.test.txt")
 
 class LogLoss(Loss):
     def __init__(self):
-        super.__init__()
-    
-    
+        super().__init__()
     '''
     Actual is of shape [B, L, M]
     Expect is of shape [B, L]
@@ -49,17 +48,14 @@ class LogLoss(Loss):
 
         return -np.log(clipval).mean()
 
-graph = Graph(LogLoss(), Adam())
+graph = Graph(LogLoss(), Adam(eta=0.01, decay=0.99))
 
 dict_size = len(vocab_dict)
-hidden_dim = 400
+hidden_dim = 300
 batch_size = 50
 
 h0 = graph.input()
 c0 = graph.input()
-
-h0.value = np.zeros([hidden_dim])
-c0.value = np.zeros([hidden_dim])
 
 embed = graph.param_of([dict_size, hidden_dim], Xavier())
 wf = graph.param_of([2 * hidden_dim, hidden_dim], Xavier())
@@ -89,55 +85,58 @@ def lstm_cell(x, h, c):
     h_next = Mul(o_temp, Tanh(c_next))
     return h_next, c_next
     
-def eval(dataset):
+def build_graph(batch):
+    graph.reset(num_param)
+    # Build Computation Graph according to length
+    bsize, length = batch.data.shape
+        
+    h0.value = np.zeros([bsize, hidden_dim])
+    c0.value = np.zeros([bsize, hidden_dim])
+        
+    h = h0
+    c = c0
+    outputs = []
+    for idx in range(length - 1):
+        in_i = graph.input()
+        in_i.value = batch.data[:, idx]  # Get value from batch
+        x = Embed(in_i, embed)
+        h, c = lstm_cell(x, h, c)
+        out_i = SoftMax(Dot(h, v2c))
+        outputs.append(out_i)
+    graph.output(Collect(outputs))
+    graph.expect(batch.data[:, 1:])
+        
+    
+def eval_on(dataset):
     total = 0
     accurate = 0
     
     for batch in dataset.batches(batch_size):
-        graph.reset(num_param)
-        # Build Computation Graph according to length
-        length = batch.data.shape[1]
-        h = h0
-        c = c0
-        outputs = []
-        for idx in range(length):
-            in_i = graph.input()
-            in_i.value = batch.data[:, idx]  # Get value from batch
-            x = Embed(embed, in_i)
-            h, c = lstm_cell(x, h, c)
-            out_i = SoftMax(Dot(h, v2c))
-            outputs.append(out_i)
-        graph.output(Collect(outputs))
-        graph.expect(batch.data[:, 1:])
+        bsize, length = batch.data.shape
+        build_graph(batch)
         loss, predict = graph.test()
-        total += batch * length
+        total += batch.size * (length - 1)
         accurate += predict
     return accurate / total
 
-epoch = 50
+epoch = 100
+
+init_dev = eval_on(dev_ds)
+init_test = eval_on(test_ds)
+print("Initial dev accuracy %.4f, test accuracy %.4f" % (init_dev, init_test))
 
 for i in range(epoch):
-    print("Epoch %d" % i)
+    
+    stime = time()
     
     for batch in train_ds.batches(batch_size):
-        graph.reset(num_param)
-        # Build Computation Graph
-        length = batch.data.shape[1]
-        h = h0
-        c = c0
-        outputs = []
-        for idx in range(length):
-            in_i = graph.input()
-            in_i.value = batch.data[:,idx]
-            x = Embed(embed,in_i)
-            h,c = lstm_cell(x,h,c)
-            out_i = SoftMax(Dot(h,v2c))
-            outputs.append(out_i)
-        graph.output(Collect(outputs))
-        graph.expect(batch.data[:,1:])
-        loss,predict = graph.train()
+        build_graph(batch)
+        loss, predict = graph.train()
         
-        eval_acc = eval(dev_ds)
-        test_acc = eval(test_ds)
+    dev_acc = eval_on(dev_ds)
+    test_acc = eval_on(test_ds)
+
+
+    print("Epoch %d, time %d secs, dev accuracy %.4f, test accuracy %.4f" % (i, time() - stime, dev_acc, test_acc))
 
     graph.update.weight_decay()
