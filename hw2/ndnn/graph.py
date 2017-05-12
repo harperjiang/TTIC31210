@@ -37,6 +37,9 @@ class Graph(object):
     def attach_node(self, node):
         self.nodes.append(node)
 
+    def reset(self, remain):
+        del self.nodes[remain:]
+
     def train(self):
         # Forward
         for node in self.nodes:

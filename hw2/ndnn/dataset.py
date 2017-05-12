@@ -59,59 +59,45 @@ class VarLenDataSet(DataSet):
 
 
 class LSTMDataSet:
-    def __init__(self, filename, ds=None):
-        if ds is None:
-            self.vocab = {'@': 0}
-            self.idx = ['@']
-        else:
-            self.vocab = ds.vocab
-            self.idx = ds.idx
-
-        self.datas = []
+    def __init__(self, vocab_dict, idx_dict, filename):
+        self.vocab_dict = vocab_dict
+        self.idx_dict = idx_dict
+        datas = {}
         lines = open(filename, "rb").readlines()
 
         for line in lines:
-            raw = '{' + line.decode('utf-8', errors='replace').strip().lower() + '}'
+            words = line.decode('utf-8', errors='replace').split()
 
-            chars = [char for char in raw]
+            idx = np.ndarray((len(words),), dtype=np.int32)
+            for i, word in enumerate(words):
+                if word not in self.vocab_dict:
+                    raise Exception()
+                idx[i] = self.vocab_dict[word]
+            keylen = len(idx)
+            if keylen not in datas:
+                datas[keylen] = [] 
+            datas[keylen].append(idx)
 
-            idx = np.ndarray((len(chars),), dtype=np.int32)
-            for i, char in enumerate(chars):
-                if char not in self.vocab:
-                    self.vocab[char] = len(self.vocab)
-                    self.idx.append(char)
-                idx[i] = self.vocab[char]
-            self.datas.append(idx)
-        self.datas.sort(key=len)
-
-    def num_char(self):
-        return len(self.vocab)
+        self.datas = list(datas.values())
 
     def translate_to_str(self, numarray):
-        return ''.join([self.idx[n] for n in numarray])
-
-    def translate_to_num(self, string):
-        return [self.vocab[c] for c in [char for char in string]]
+        return ' '.join([self.idx_dict[n] for n in numarray])
 
     def num_batch(self):
         return self.numbatch
 
     def batches(self, batch_size):
-        batch_range = range(0, len(self.datas), batch_size)
-        batches = [self.datas[idx:idx + batch_size] for idx in batch_range]
-        self.numbatch = len(batches)
-        perm = range(len(batches))
+        self.numbatch = np.sum([np.ceil(len(item) / batch_size) for item in self.datas])
+        
+        perm = np.random.permutation(len(self.datas))
+        
         for p in perm:
-            batch = batches[p]
-            # Pad data
-            length = [len(seq) for seq in batch]
-            max_len = max(length)
-            pad_data = []
+            batch_base = self.datas[p]
+            subperm = np.random.permutation(len(batch_base))
+            batch_range = range(0, len(batch_base), batch_size)
+        
+            batch_idices = [subperm[idx:idx + batch_size] for idx in batch_range]
 
-            for i, item in enumerate(batch):
-                item_pad = np.zeros(max_len, dtype=np.int32)
-                item_pad[0:length[i]] = item
-                pad_data.append(item_pad)
-
-            pad_data = np.float64(pad_data).copy()
-            yield Batch(len(batch), pad_data, None)
+            for batch_idx in batch_idices:
+                item = [batch_base[idx] for idx in batch_idx]
+                yield Batch(len(item), np.array(item), None)
