@@ -1,4 +1,3 @@
-
 import numpy as np
 import ndnn
 from time import time
@@ -16,21 +15,28 @@ train_ds = LSTMDataSet(vocab_dict, idx_dict, "bobsue-data/bobsue.lm.train.txt")
 dev_ds = LSTMDataSet(vocab_dict, idx_dict, "bobsue-data/bobsue.lm.dev.txt")
 test_ds = LSTMDataSet(vocab_dict, idx_dict, "bobsue-data/bobsue.lm.test.txt")
 
+
 class HingeLoss(Node):
     def __init__(self, actual, expect, negSamples):
         super().__init__([actual])
         self.actual = actual
         self.expect = expect
         self.negSamples = negSamples
-    
+
     def compute(self):
-        pass
+        ytht = np.einsum('ij,ij->i', self.actual.value, self.expect.value)
+        ypht = np.matmul(self.actual.value, self.negSamples.value.T)
+        value = np.max(1 - ytht + ypht, 0)
+        self.mask = value > 0
+        return value.sum(axis=1)
 
     def updateGrad(self):
-        pass
+        self.actual.grad += self.grad * np.matmul(self.mask.value, self.negSamples.value - self.actual.value)
+        self.expect.grad += self.grad * self.mask.value.sum(axis=1) * (-self.actual.value)
+        self.negSamples.grad += (self.grad * self.actual.value).sum(axis=0)
 
-    
-graph = Graph(TrivialLoss(), Adam(eta=0.03, decay=0.99))
+
+graph = Graph(TrivialLoss(), Adam(eta=0.01, decay=0.99))
 
 dict_size = len(vocab_dict)
 hidden_dim = 300
@@ -60,6 +66,7 @@ negSamples.value = negSampleIdx
 
 num_param = 13
 
+
 def lstm_cell(x, h, c):
     concat = Concat(h, x)
     # Forget Gate
@@ -69,22 +76,23 @@ def lstm_cell(x, h, c):
     # Temp Vars
     c_temp = Tanh(Add(Dot(concat, wc), bc))
     o_temp = Sigmoid(Add(Dot(concat, wo), bo))
-    
+
     # Output
     c_next = Add(Mul(f_gate, c), Mul(i_gate, c_temp))
     h_next = Mul(o_temp, Tanh(c_next))
     return h_next, c_next
-    
+
+
 def build_graph(batch):
     graph.reset(num_param)
     # Build Computation Graph according to length
     bsize, length = batch.data.shape
-    
+
     neg = Embed(negSamples, lossEmbed)
-    
+
     h0.value = np.zeros([bsize, hidden_dim])
     c0.value = np.zeros([bsize, hidden_dim])
-        
+
     h = h0
     c = c0
     outputs = []
@@ -93,23 +101,23 @@ def build_graph(batch):
         in_i.value = batch.data[:, idx]  # Get value from batch
         x = Embed(in_i, embed)
         h, c = lstm_cell(x, h, c)
-        
+
         expect_i = graph.input()
         expect_i.value = batch.data[:, idx + 1]
         embed_expect = Embed(expect_i, lossEmbed)
-        
+
         loss = HingeLoss(h, embed_expect, neg)
-        
+
         out_i = loss
-        
+
         outputs.append(out_i)
     graph.output(Collect(outputs))
-        
-    
+
+
 def eval_on(dataset):
     total = 0
     accurate = 0
-    
+
     for batch in dataset.batches(batch_size):
         bsize, length = batch.data.shape
         build_graph(batch)
@@ -118,6 +126,7 @@ def eval_on(dataset):
         accurate += predict
     return accurate / total
 
+
 epoch = 100
 
 init_dev = eval_on(dev_ds)
@@ -125,16 +134,15 @@ init_test = eval_on(test_ds)
 print("Initial dev accuracy %.4f, test accuracy %.4f" % (init_dev, init_test))
 
 for i in range(epoch):
-    
+
     stime = time()
-    
+
     for batch in train_ds.batches(batch_size):
         build_graph(batch)
         loss, predict = graph.train()
-        
+
     dev_acc = eval_on(dev_ds)
     test_acc = eval_on(test_ds)
-
 
     print("Epoch %d, time %d secs, dev accuracy %.4f, test accuracy %.4f" % (i, time() - stime, dev_acc, test_acc))
 
