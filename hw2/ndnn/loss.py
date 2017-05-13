@@ -22,8 +22,9 @@ class TrivialLoss(Loss):
 
     def loss(self, actual, expect, fortest):
         if not fortest:
-            self.grad = np.ones_like(actual)    
-        return actual
+            self.grad = np.ones_like(actual)
+        self.acc = (actual == expect).sum()
+        return actual.sum()
 
 
 class SquareLoss(Loss):
@@ -46,27 +47,29 @@ clip = 1e-12
 class LogLoss(Loss):
     def __init__(self):
         super().__init__()
-        
+
     '''
     Actual shape is [B,1]
     Expect shape is [B,1]
     loss = -log(actual)*expect - log(1-actual)(1-expect)
     '''
+
     def loss(self, actual, expect, fortest):
         batch_size = expect.shape[0]
         clipped = np.maximum(actual, clip)
-        
+
         nexpect = 1 - expect
         nclipped = 1 - clipped
-        
+
         loss = -np.log(clipped * expect + nclipped * nexpect).mean()
         if not fortest:
-            self.grad = (-expect / clipped + nexpect / nclipped) / batch_size 
-        
+            self.grad = (-expect / clipped + nexpect / nclipped) / batch_size
+
         predict = (actual >= 0.5)
         self.acc = np.equal(predict, expect).sum()
-        
+
         return loss
+
 
 class SoftMaxLoss(Loss):
     def __init__(self):

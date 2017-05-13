@@ -1,13 +1,13 @@
 import numpy as np
-import ndnn
 from time import time
-from vocab_dict import get_dict
+
 from ndnn.dataset import LSTMDataSet
 from ndnn.graph import Graph
 from ndnn.init import Xavier, Zero
-from ndnn.node import Node, Concat, Sigmoid, Add, Dot, Tanh, Mul, Embed, Collect
 from ndnn.loss import TrivialLoss
+from ndnn.node import Node, Concat, Sigmoid, Add, Dot, Tanh, Mul, Embed, Collect
 from ndnn.sgd import Adam
+from vocab_dict import get_dict
 
 vocab_dict, idx_dict = get_dict()
 
@@ -26,14 +26,71 @@ class HingeLoss(Node):
     def compute(self):
         ytht = np.einsum('ij,ij->i', self.actual.value, self.expect.value)
         ypht = np.matmul(self.actual.value, self.negSamples.value.T)
-        value = np.max(1 - ytht + ypht, 0)
+        value = np.maximum(1 - ytht[:, np.newaxis] + ypht, 0)
         self.mask = value > 0
         return value.sum(axis=1)
 
     def updateGrad(self):
-        self.actual.grad += self.grad * np.matmul(self.mask.value, self.negSamples.value - self.actual.value)
-        self.expect.grad += self.grad * self.mask.value.sum(axis=1) * (-self.actual.value)
-        self.negSamples.grad += (self.grad * self.actual.value).sum(axis=0)
+        gradscalar = self.grad[:, np.newaxis]
+        multiplier = self.mask.sum(axis=1, keepdims=True)
+        self.actual.grad += gradscalar * (
+            np.matmul(self.mask.value, self.negSamples.value) - multiplier * self.actual.value)
+        self.expect.grad += gradscalar * multiplier * (-self.actual.value)
+        self.negSamples.grad += np.einsum('br,bh->rh', self.mask.value, gradscalar * self.actual.value)
+
+class HingePredict(Node):
+    def __init__(self, actual, expect, negSamples):
+        super().__init__([actual])
+        self.actual = actual
+        self.expect = expect
+        self.negSamples = negSamples
+
+    def compute(self):
+        ytht = np.einsum('ij,ij->i', self.actual.value, self.expect.value)
+        ypht = np.matmul(self.actual.value, self.negSamples.value.T)
+        value = np.maximum(1 - ytht[:, np.newaxis] + ypht, 0)
+        self.mask = value > 0
+        return value.sum(axis=1)
+
+    def updateGrad(self):
+        gradscalar = self.grad[:, np.newaxis]
+        multiplier = self.mask.sum(axis=1, keepdims=True)
+        self.actual.grad += gradscalar * (
+            np.matmul(self.mask.value, self.negSamples.value) - multiplier * self.actual.value)
+        self.expect.grad += gradscalar * multiplier * (-self.actual.value)
+        self.negSamples.grad += np.einsum('br,bh->rh', self.mask.value, gradscalar * self.actual.value)
+
+
+class HingeLossF(Loss):
+    def __init__(self):
+        super().__init__()
+
+    def loss(self, actual, expect, fortest):
+        if not fortest:
+            self.grad = np.ones_like(actual)
+
+        # Find the one with smallest loss as prediction
+
+        # All_embed has size D,H
+        all_embed = self.graph.byname("loss_embed").value
+        # Actual has size B,H
+        # Neg Samples has size R,H
+        neg_samples = self.graph.byname("negs").value
+
+        d = all_embed.shape[0]
+        r = neg_samples.shape[1]
+
+        bd = np.einsum('bh,dh->bd', actual, all_embed)
+        br = np.einsum('bh,rh->br', actual, neg_samples)
+
+        bdr1 = np.repeat(bd[:, :, np.newaxis], r, axis=2)
+        bdr2 = np.repeat(br[:, np.newaxis, :], d, axis=1)
+
+        predict = np.maximum(1 - bdr1 + bdr2, 0).sum(axis=2).argmin(axis=1)
+
+        self.acc = (predict == expect).sum
+
+        return actual.sum()
 
 
 graph = Graph(TrivialLoss(), Adam(eta=0.01, decay=0.99))
@@ -47,6 +104,7 @@ c0 = graph.input()
 
 embed = graph.param_of([dict_size, hidden_dim], Xavier())
 lossEmbed = graph.param_of([dict_size, hidden_dim], Xavier())
+lossEmbed.name = "loss_embed"
 
 wf = graph.param_of([2 * hidden_dim, hidden_dim], Xavier())
 bf = graph.param_of([hidden_dim], Zero())
@@ -83,7 +141,7 @@ def lstm_cell(x, h, c):
     return h_next, c_next
 
 
-def build_graph(batch):
+def build_train_graph(batch):
     graph.reset(num_param)
     # Build Computation Graph according to length
     bsize, length = batch.data.shape
@@ -107,12 +165,36 @@ def build_graph(batch):
         embed_expect = Embed(expect_i, lossEmbed)
 
         loss = HingeLoss(h, embed_expect, neg)
-
         out_i = loss
-
         outputs.append(out_i)
-    graph.output(Collect(outputs))
 
+    graph.output(Collect(outputs))
+    graph.expect(batch.data[:, 1:])
+
+def build_predict_graph(batch):
+    graph.reset(num_param)
+    # Build Computation Graph according to length
+    bsize, length = batch.data.shape
+
+    neg = Embed(negSamples, lossEmbed)
+
+    h0.value = np.zeros([bsize, hidden_dim])
+    c0.value = np.zeros([bsize, hidden_dim])
+
+    h = h0
+    c = c0
+    outputs = []
+    for idx in range(length - 1):
+        in_i = graph.input()
+        in_i.value = batch.data[:, idx]  # Get value from batch
+        x = Embed(in_i, embed)
+        h, c = lstm_cell(x, h, c)
+
+        predict_i = HingePredict(h, lossEmbed, neg)
+        outputs.append(predict_i)
+
+    graph.output(Collect(outputs))
+    graph.expect(batch.data[:, 1:])
 
 def eval_on(dataset):
     total = 0
@@ -120,7 +202,7 @@ def eval_on(dataset):
 
     for batch in dataset.batches(batch_size):
         bsize, length = batch.data.shape
-        build_graph(batch)
+        build_predict_graph(batch)
         loss, predict = graph.test()
         total += batch.size * (length - 1)
         accurate += predict
@@ -136,14 +218,18 @@ print("Initial dev accuracy %.4f, test accuracy %.4f" % (init_dev, init_test))
 for i in range(epoch):
 
     stime = time()
-
+    total_loss = 0
     for batch in train_ds.batches(batch_size):
-        build_graph(batch)
+        build_train_graph(batch)
         loss, predict = graph.train()
+        total_loss += loss
 
     dev_acc = eval_on(dev_ds)
     test_acc = eval_on(test_ds)
 
-    print("Epoch %d, time %d secs, dev accuracy %.4f, test accuracy %.4f" % (i, time() - stime, dev_acc, test_acc))
+    print("Epoch %d, time %d secs, "
+          "train loss %.4f, "
+          "dev accuracy %.4f, "
+          "test accuracy %.4f" % (i, time() - stime, total_loss, dev_acc, test_acc))
 
     graph.update.weight_decay()
