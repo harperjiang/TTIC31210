@@ -34,9 +34,9 @@ class HingeLoss(Node):
         gradscalar = self.grad[:, np.newaxis]
         multiplier = self.mask.sum(axis=1, keepdims=True)
         self.actual.grad += gradscalar * (
-            np.matmul(self.mask.value, self.negSamples.value) - multiplier * self.actual.value)
+            np.matmul(self.mask, self.negSamples.value) - multiplier * self.expect.value)
         self.expect.grad += gradscalar * multiplier * (-self.actual.value)
-        self.negSamples.grad += np.einsum('br,bh->rh', self.mask.value, gradscalar * self.actual.value)
+        self.negSamples.grad += np.einsum('br,bh->rh', self.mask, gradscalar * self.actual.value)
 
 class HingePredict(Node):
     def __init__(self, actual, allEmbed, negSamples):
@@ -79,8 +79,7 @@ h0 = graph.input()
 c0 = graph.input()
 
 embed = graph.param_of([dict_size, hidden_dim], Xavier())
-lossEmbed = graph.param_of([dict_size, hidden_dim], Xavier())
-lossEmbed.name = "loss_embed"
+#lossEmbed = graph.param_of([dict_size, hidden_dim], Xavier())
 
 wf = graph.param_of([2 * hidden_dim, hidden_dim], Xavier())
 bf = graph.param_of([hidden_dim], Zero())
@@ -91,14 +90,14 @@ bc = graph.param_of([hidden_dim], Zero())
 wo = graph.param_of([2 * hidden_dim, hidden_dim], Xavier())
 bo = graph.param_of([hidden_dim], Zero())
 
-numNegSamples = 10
+numNegSamples = 100
 negSampleIdx = np.array([np.random.randint(low=0, high=dict_size) for i in range(numNegSamples)])
 
 negSamples = graph.input()
 negSamples.value = negSampleIdx
 # v2c = graph.param_of([hidden_dim, dict_size], Xavier())
 
-num_param = 13
+num_param = 12
 
 
 def lstm_cell(x, h, c):
@@ -122,7 +121,7 @@ def build_train_graph(batch):
     # Build Computation Graph according to length
     bsize, length = batch.data.shape
 
-    neg = Embed(negSamples, lossEmbed)
+    neg = Embed(negSamples, embed)
 
     h0.value = np.zeros([bsize, hidden_dim])
     c0.value = np.zeros([bsize, hidden_dim])
@@ -138,7 +137,7 @@ def build_train_graph(batch):
 
         expect_i = graph.input()
         expect_i.value = batch.data[:, idx + 1]
-        embed_expect = Embed(expect_i, lossEmbed)
+        embed_expect = Embed(expect_i, embed)
 
         loss = HingeLoss(h, embed_expect, neg)
         out_i = loss
@@ -152,7 +151,7 @@ def build_predict_graph(batch):
     # Build Computation Graph according to length
     bsize, length = batch.data.shape
 
-    neg = Embed(negSamples, lossEmbed)
+    neg = Embed(negSamples, embed)
 
     h0.value = np.zeros([bsize, hidden_dim])
     c0.value = np.zeros([bsize, hidden_dim])
@@ -166,7 +165,7 @@ def build_predict_graph(batch):
         x = Embed(in_i, embed)
         h, c = lstm_cell(x, h, c)
 
-        predict_i = HingePredict(h, lossEmbed, neg)
+        predict_i = HingePredict(h, embed, neg)
         outputs.append(predict_i)
 
     graph.output(Collect(outputs))
