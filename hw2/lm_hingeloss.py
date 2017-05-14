@@ -39,58 +39,34 @@ class HingeLoss(Node):
         self.negSamples.grad += np.einsum('br,bh->rh', self.mask.value, gradscalar * self.actual.value)
 
 class HingePredict(Node):
-    def __init__(self, actual, expect, negSamples):
+    def __init__(self, actual, allEmbed, negSamples):
         super().__init__([actual])
         self.actual = actual
-        self.expect = expect
+        self.allEmbed = allEmbed
         self.negSamples = negSamples
 
     def compute(self):
-        ytht = np.einsum('ij,ij->i', self.actual.value, self.expect.value)
-        ypht = np.matmul(self.actual.value, self.negSamples.value.T)
-        value = np.maximum(1 - ytht[:, np.newaxis] + ypht, 0)
-        self.mask = value > 0
-        return value.sum(axis=1)
-
-    def updateGrad(self):
-        gradscalar = self.grad[:, np.newaxis]
-        multiplier = self.mask.sum(axis=1, keepdims=True)
-        self.actual.grad += gradscalar * (
-            np.matmul(self.mask.value, self.negSamples.value) - multiplier * self.actual.value)
-        self.expect.grad += gradscalar * multiplier * (-self.actual.value)
-        self.negSamples.grad += np.einsum('br,bh->rh', self.mask.value, gradscalar * self.actual.value)
-
-
-class HingeLossF(Loss):
-    def __init__(self):
-        super().__init__()
-
-    def loss(self, actual, expect, fortest):
-        if not fortest:
-            self.grad = np.ones_like(actual)
-
         # Find the one with smallest loss as prediction
 
         # All_embed has size D,H
-        all_embed = self.graph.byname("loss_embed").value
         # Actual has size B,H
         # Neg Samples has size R,H
-        neg_samples = self.graph.byname("negs").value
 
-        d = all_embed.shape[0]
-        r = neg_samples.shape[1]
+        d = self.allEmbed.value.shape[0]
+        r = self.negSamples.value.shape[0]
 
-        bd = np.einsum('bh,dh->bd', actual, all_embed)
-        br = np.einsum('bh,rh->br', actual, neg_samples)
+        bd = np.einsum('bh,dh->bd', self.actual.value, self.allEmbed.value)
+        br = np.einsum('bh,rh->br', self.actual.value, self.negSamples.value)
 
         bdr1 = np.repeat(bd[:, :, np.newaxis], r, axis=2)
         bdr2 = np.repeat(br[:, np.newaxis, :], d, axis=1)
 
         predict = np.maximum(1 - bdr1 + bdr2, 0).sum(axis=2).argmin(axis=1)
+        return predict
 
-        self.acc = (predict == expect).sum
 
-        return actual.sum()
+    def updateGrad(self):
+        raise Exception("Operation not supported")
 
 
 graph = Graph(TrivialLoss(), Adam(eta=0.01, decay=0.99))
