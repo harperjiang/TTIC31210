@@ -1,11 +1,12 @@
-import numpy as np
 from time import time
 
-from ndnn.dataset import LSTMDataSet
-from ndnn.graph import Graph
-from ndnn.init import Xavier, Zero
+import numpy as np
+
+from lstm_dataset import LSTMDataSet
+from lstm_graph import LSTMGraph
+from ndnn.init import Xavier
 from ndnn.loss import TrivialLoss
-from ndnn.node import Node, Concat, Sigmoid, Add, Dot, Tanh, Mul, Embed, Collect
+from ndnn.node import Node, Embed, Collect
 from ndnn.sgd import Adam
 from vocab_dict import get_dict
 
@@ -38,6 +39,7 @@ class HingeLoss(Node):
         self.expect.grad += gradscalar * multiplier * (-self.actual.value)
         self.negSamples.grad += np.einsum('br,bh->rh', self.mask, gradscalar * self.actual.value)
 
+
 class HingePredict(Node):
     def __init__(self, actual, allEmbed, negSamples):
         super().__init__([actual])
@@ -64,31 +66,17 @@ class HingePredict(Node):
         predict = np.maximum(1 - bdr1 + bdr2, 0).sum(axis=2).argmin(axis=1)
         return predict
 
-
     def updateGrad(self):
         raise Exception("Operation not supported")
 
-
-graph = Graph(TrivialLoss(), Adam(eta=0.01, decay=0.99))
 
 dict_size = len(vocab_dict)
 hidden_dim = 300
 batch_size = 50
 
-h0 = graph.input()
-c0 = graph.input()
+graph = LSTMGraph(TrivialLoss(), Adam(eta=0.01, decay=0.99), dict_size, hidden_dim)
 
-embed = graph.param_of([dict_size, hidden_dim], Xavier())
-#lossEmbed = graph.param_of([dict_size, hidden_dim], Xavier())
-
-wf = graph.param_of([2 * hidden_dim, hidden_dim], Xavier())
-bf = graph.param_of([hidden_dim], Zero())
-wi = graph.param_of([2 * hidden_dim, hidden_dim], Xavier())
-bi = graph.param_of([hidden_dim], Zero())
-wc = graph.param_of([2 * hidden_dim, hidden_dim], Xavier())
-bc = graph.param_of([hidden_dim], Zero())
-wo = graph.param_of([2 * hidden_dim, hidden_dim], Xavier())
-bo = graph.param_of([hidden_dim], Zero())
+lossEmbed = graph.param_of([dict_size, hidden_dim], Xavier())
 
 numNegSamples = 100
 negSampleIdx = np.array([np.random.randint(low=0, high=dict_size) for i in range(numNegSamples)])
@@ -97,47 +85,31 @@ negSamples = graph.input()
 negSamples.value = negSampleIdx
 # v2c = graph.param_of([hidden_dim, dict_size], Xavier())
 
-num_param = 12
-
-
-def lstm_cell(x, h, c):
-    concat = Concat(h, x)
-    # Forget Gate
-    f_gate = Sigmoid(Add(Dot(concat, wf), bf))
-    # Input Gate
-    i_gate = Sigmoid(Add(Dot(concat, wi), bi))
-    # Temp Vars
-    c_temp = Tanh(Add(Dot(concat, wc), bc))
-    o_temp = Sigmoid(Add(Dot(concat, wo), bo))
-
-    # Output
-    c_next = Add(Mul(f_gate, c), Mul(i_gate, c_temp))
-    h_next = Mul(o_temp, Tanh(c_next))
-    return h_next, c_next
+graph.resetNum = len(graph.nodes)
 
 
 def build_train_graph(batch):
-    graph.reset(num_param)
+    graph.reset()
     # Build Computation Graph according to length
     bsize, length = batch.data.shape
 
-    neg = Embed(negSamples, embed)
+    neg = Embed(negSamples, graph.embed)
 
-    h0.value = np.zeros([bsize, hidden_dim])
-    c0.value = np.zeros([bsize, hidden_dim])
+    graph.h0.value = np.zeros([bsize, hidden_dim])
+    graph.c0.value = np.zeros([bsize, hidden_dim])
 
-    h = h0
-    c = c0
+    h = graph.h0
+    c = graph.c0
     outputs = []
     for idx in range(length - 1):
         in_i = graph.input()
         in_i.value = batch.data[:, idx]  # Get value from batch
-        x = Embed(in_i, embed)
-        h, c = lstm_cell(x, h, c)
+        x = Embed(in_i, graph.embed)
+        h, c = graph.lstm_cell(x, h, c)
 
         expect_i = graph.input()
         expect_i.value = batch.data[:, idx + 1]
-        embed_expect = Embed(expect_i, embed)
+        embed_expect = Embed(expect_i, graph.embed)
 
         loss = HingeLoss(h, embed_expect, neg)
         out_i = loss
@@ -146,30 +118,32 @@ def build_train_graph(batch):
     graph.output(Collect(outputs))
     graph.expect(batch.data[:, 1:])
 
+
 def build_predict_graph(batch):
-    graph.reset(num_param)
+    graph.reset()
     # Build Computation Graph according to length
     bsize, length = batch.data.shape
 
-    neg = Embed(negSamples, embed)
+    neg = Embed(negSamples, graph.embed)
 
-    h0.value = np.zeros([bsize, hidden_dim])
-    c0.value = np.zeros([bsize, hidden_dim])
+    graph.h0.value = np.zeros([bsize, hidden_dim])
+    graph.c0.value = np.zeros([bsize, hidden_dim])
 
-    h = h0
-    c = c0
+    h = graph.h0
+    c = graph.c0
     outputs = []
     for idx in range(length - 1):
         in_i = graph.input()
         in_i.value = batch.data[:, idx]  # Get value from batch
-        x = Embed(in_i, embed)
-        h, c = lstm_cell(x, h, c)
+        x = Embed(in_i, graph.embed)
+        h, c = graph.lstm_cell(x, h, c)
 
-        predict_i = HingePredict(h, embed, neg)
+        predict_i = HingePredict(h, graph.embed, neg)
         outputs.append(predict_i)
 
     graph.output(Collect(outputs))
     graph.expect(batch.data[:, 1:])
+
 
 def eval_on(dataset):
     total = 0
