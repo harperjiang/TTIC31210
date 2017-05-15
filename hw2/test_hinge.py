@@ -29,34 +29,23 @@ class HingeLoss(Node):
 
 
 class HingePredict(Node):
-    def __init__(self, actual, allEmbed, negSamples):
+    def __init__(self, actual, allEmbed):
         super().__init__([actual])
         self.actual = actual
         self.allEmbed = allEmbed
-        self.negSamples = negSamples
 
     def compute(self):
-        # Find the one with smallest loss as prediction
+        # Find the one with smallest y^Th as prediction
 
         # All_embed has size D,H
         # Actual has size B,H
-        # Neg Samples has size R,H
+        # Result has size B
 
-        d = self.allEmbed.value.shape[0]
-        r = self.negSamples.value.shape[0]
+        return np.matmul(self.actual.value, self.allEmbed.value.T).argmin(axis = 1)
 
-        bd = np.einsum('bh,dh->bd', self.actual.value, self.allEmbed.value)
-        br = np.einsum('bh,rh->br', self.actual.value, self.negSamples.value)
-
-        bdr1 = np.repeat(bd[:, :, np.newaxis], r, axis=2)
-        bdr2 = np.repeat(br[:, np.newaxis, :], d, axis=1)
-
-        predict = np.maximum(1 - bdr1 + bdr2, 0).sum(axis=2).argmin(axis=1)
-        return predict
 
     def updateGrad(self):
         raise Exception("Operation not supported")
-
 
 class DummyContext:
     def attach_node(self, node):
@@ -103,12 +92,11 @@ class HingeLossTest(unittest.TestCase):
 
 class HingePredictTest(unittest.TestCase):
     def testHingePredictCompute(self):
-        actual = DummyNode(np.array([[1, 3, 2, 5], [2, 2, 0, 1]]))
+        actual = DummyNode(np.array([[1, 3, 2, 5], [2, 3, 0, 1]]))
         allEmbed = DummyNode(np.array([[0, 1, 1, 0], [1, 0, 1, 0], [1, 0, 0, 1], [1, 1, 1, 1], [1, 0, 1, 1]]))
-        negSample = DummyNode(np.array([[0, 1, 1, 0], [1, 0, 1, 0], [1, 0, 0, 1]]))
 
-        hpredict = HingePredict(actual, allEmbed, negSample)
+        hpredict = HingePredict(actual, allEmbed)
 
         result = hpredict.compute()
 
-        self.assertTrue(np.array_equal(result, np.array([3, 3])))
+        self.assertTrue(np.array_equal(result, np.array([1, 1])))

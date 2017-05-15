@@ -204,19 +204,25 @@ class Collect(Node):
     def updateGrad(self):
         for idx, n in enumerate(self.nodes):
             n.grad += self.grad[:, idx]
-            
+
+
 class Average(Node):
     def __init__(self, x):
         super(Average, self).__init__([x])
         self.x = x
-    
+
     def compute(self):
         return self.x.value.mean(axis=1)
-        
+
     def updateGrad(self):
-        self.x.grad += np.repeat(self.grad[:, np.newaxis, :],
-                                     self.x.value.shape[1], axis=1)
-            
+        self.x.grad += np.repeat(self.grad[:, np.newaxis, :], self.x.value.shape[1], axis=1)
+
+
+"""
+Embed function look up a [B,1] vector where elements in [0,N) from a [N, H] table and return [B,H]  
+"""
+
+
 class Embed(Node):
     def __init__(self, idx, w2v):
         super(Embed, self).__init__([idx, w2v])
@@ -225,12 +231,46 @@ class Embed(Node):
 
     def compute(self):
         return self.w2v.value[np.int32(self.idx.value), :]
-        
+
     def updateGrad(self):
-        grad = np.zeros_like(self.w2v.value)
-        grad[np.int32(self.idx.value), :] += self.grad
-        self.w2v.grad += grad
-        
+        b = self.idx.value.shape[0]
+        n = self.w2v.value.shape[0]
+
+        transform = np.zeros([b, n])
+        transform[np.arange(b), self.idx.value] = 1
+
+        self.w2v.grad += np.matmul(transform.T, self.grad)
+
+
+"""
+MDEmbed looks up [B,L] vector where elements in [0,N) from [N,H] table and return [B,L,H]
+"""
+
+
+class MDEmbed(Node):
+    def __init__(self, idx, w2v):
+        super().__init__([idx, w2v])
+        self.idx = idx
+        self.w2v = w2v
+
+    def compute(self):
+        b = self.idx.value.shape[0]
+        h = self.w2v.value.shape[1]
+        return self.w2v.value[np.int32(self.idx.value.reshape([-1])), :].reshape(b, -1, h)
+
+    def updateGrad(self):
+        b = self.idx.value.shape[0]
+        l = self.idx.value.shape[1]
+        n = self.w2v.value.shape[0]
+
+        idxflat = self.idx.value.reshape([-1])
+
+        transform = np.zeros([b * l, n])
+        transform[np.arange(b * l), idxflat] = 1
+
+        self.w2v.grad += np.matmul(transform.T, self.grad.reshape([b * l, -1]))
+
+
 class ArgMax(Node):
     def __init__(self, x):
         super(ArgMax, self).__init__([x])

@@ -17,7 +17,7 @@ dev_ds = LSTMDataSet(vocab_dict, idx_dict, "bobsue-data/bobsue.lm.dev.txt")
 test_ds = LSTMDataSet(vocab_dict, idx_dict, "bobsue-data/bobsue.lm.test.txt")
 
 dict_size = len(vocab_dict)
-hidden_dim = 300
+hidden_dim = 200
 batch_size = 50
 
 graph = LSTMGraph(LogLoss(), Adam(eta=0.01, decay=0.99), dict_size, hidden_dim)

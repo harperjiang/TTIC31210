@@ -41,30 +41,20 @@ class HingeLoss(Node):
 
 
 class HingePredict(Node):
-    def __init__(self, actual, allEmbed, negSamples):
+    def __init__(self, actual, allEmbed):
         super().__init__([actual])
         self.actual = actual
         self.allEmbed = allEmbed
-        self.negSamples = negSamples
 
     def compute(self):
-        # Find the one with smallest loss as prediction
+        # Find the one with smallest y^Th as prediction
 
         # All_embed has size D,H
         # Actual has size B,H
-        # Neg Samples has size R,H
+        # Result has size B
 
-        d = self.allEmbed.value.shape[0]
-        r = self.negSamples.value.shape[0]
+        return np.matmul(self.actual.value, self.allEmbed.value.T).argmin(axis = 1)
 
-        bd = np.einsum('bh,dh->bd', self.actual.value, self.allEmbed.value)
-        br = np.einsum('bh,rh->br', self.actual.value, self.negSamples.value)
-
-        bdr1 = np.repeat(bd[:, :, np.newaxis], r, axis=2)
-        bdr2 = np.repeat(br[:, np.newaxis, :], d, axis=1)
-
-        predict = np.maximum(1 - bdr1 + bdr2, 0).sum(axis=2).argmin(axis=1)
-        return predict
 
     def updateGrad(self):
         raise Exception("Operation not supported")
@@ -76,7 +66,7 @@ batch_size = 50
 
 graph = LSTMGraph(TrivialLoss(), Adam(eta=0.01, decay=0.99), dict_size, hidden_dim)
 
-lossEmbed = graph.param_of([dict_size, hidden_dim], Xavier())
+#lossEmbed = graph.param_of([dict_size, hidden_dim], Xavier())
 
 numNegSamples = 100
 negSampleIdx = np.array([np.random.randint(low=0, high=dict_size) for i in range(numNegSamples)])
@@ -138,7 +128,7 @@ def build_predict_graph(batch):
         x = Embed(in_i, graph.embed)
         h, c = graph.lstm_cell(x, h, c)
 
-        predict_i = HingePredict(h, graph.embed, neg)
+        predict_i = HingePredict(h, graph.embed)
         outputs.append(predict_i)
 
     graph.output(Collect(outputs))

@@ -17,16 +17,15 @@ dev_ds = S2SDataSet(vocab_dict, idx_dict, "bobsue-data/bobsue.seq2seq.dev.tsv")
 test_ds = S2SDataSet(vocab_dict, idx_dict, "bobsue-data/bobsue.seq2seq.test.tsv")
 
 dict_size = len(vocab_dict)
-hidden_dim = 300
+hidden_dim = 200
 batch_size = 50
 
 graph = LSTMGraph(LogLoss(), Adam(eta=0.01, decay=0.99), dict_size, hidden_dim)
 
-num_param = 12
 
 def build_graph(batch):
     data = batch.data[0]
-    graph.reset(num_param)
+    graph.reset()
     # Build Computation Graph according to length
     bsize, length = data.shape
 
