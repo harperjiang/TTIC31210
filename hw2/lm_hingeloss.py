@@ -4,7 +4,6 @@ import numpy as np
 
 from lstm_dataset import LSTMDataSet
 from lstm_graph import LSTMGraph
-from ndnn.init import Xavier
 from ndnn.loss import TrivialLoss
 from ndnn.node import Node, Embed, Collect
 from ndnn.sgd import Adam
@@ -53,26 +52,26 @@ class HingePredict(Node):
         # Actual has size B,H
         # Result has size B
 
-        return np.matmul(self.actual.value, self.allEmbed.value.T).argmin(axis = 1)
-
+        return np.matmul(self.actual.value, self.allEmbed.value.T).argmin(axis=1)
 
     def updateGrad(self):
         raise Exception("Operation not supported")
 
 
 dict_size = len(vocab_dict)
-hidden_dim = 300
+hidden_dim = 100
 batch_size = 50
 
 graph = LSTMGraph(TrivialLoss(), Adam(eta=0.01, decay=0.99), dict_size, hidden_dim)
 
-#lossEmbed = graph.param_of([dict_size, hidden_dim], Xavier())
+# lossEmbed = graph.param_of([dict_size, hidden_dim], Xavier())
 
 numNegSamples = 100
 negSampleIdx = np.array([np.random.randint(low=0, high=dict_size) for i in range(numNegSamples)])
 
 negSamples = graph.input()
 negSamples.value = negSampleIdx
+#negSamples.value = np.array(range(dict_size))
 # v2c = graph.param_of([hidden_dim, dict_size], Xavier())
 
 graph.resetNum = len(graph.nodes)
@@ -158,17 +157,21 @@ for i in range(epoch):
 
     stime = time()
     total_loss = 0
+    total_predict = 0
+    total_record = 0
     for batch in train_ds.batches(batch_size):
         build_train_graph(batch)
         loss, predict = graph.train()
         total_loss += loss
-
+        total_predict += predict
+        total_record += batch.size * (batch.data.shape[1] - 1)
     dev_acc = eval_on(dev_ds)
     test_acc = eval_on(test_ds)
 
     print("Epoch %d, time %d secs, "
           "train loss %.4f, "
+          "train accuracy %.4f, "
           "dev accuracy %.4f, "
-          "test accuracy %.4f" % (i, time() - stime, total_loss, dev_acc, test_acc))
+          "test accuracy %.4f" % (i, time() - stime, total_loss, total_predict / total_record, dev_acc, test_acc))
 
     graph.update.weight_decay()

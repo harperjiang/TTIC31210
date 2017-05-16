@@ -39,6 +39,17 @@ class Graph(object):
         self.nodes.append(node)
 
     def reset(self):
+        toRemoves = self.nodes[self.resetNum:]
+        for tor in toRemoves:
+            try:
+                self.inputs.remove(tor)
+            except ValueError:
+                pass
+            try :
+                self.params.remove(tor)
+            except ValueError:
+                pass
+
         del self.nodes[self.resetNum:]
 
     def train(self):
