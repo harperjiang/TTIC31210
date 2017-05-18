@@ -2,11 +2,10 @@ from time import time
 
 import numpy as np
 
-from logloss import LogLoss
+from lm_loss import LogLoss
 from lstm_dataset import LSTMDataSet
 from lstm_graph import LSTMGraph
-from ndnn.init import Xavier, Zero
-from ndnn.node import Concat, Sigmoid, Add, Dot, Tanh, Mul, Embed, SoftMax, Collect
+from ndnn.node import Dot, Embed, SoftMax, Collect
 from ndnn.sgd import Adam
 from vocab_dict import get_dict
 
@@ -21,6 +20,7 @@ hidden_dim = 200
 batch_size = 50
 
 graph = LSTMGraph(LogLoss(), Adam(eta=0.01, decay=0.99), dict_size, hidden_dim)
+
 
 def build_graph(batch):
     graph.reset()
@@ -67,17 +67,23 @@ for i in range(epoch):
 
     stime = time()
     total_loss = 0
+    total_acc = 0
+    total_count = 0
     for batch in train_ds.batches(batch_size):
+        b, l = batch.data.shape
         build_graph(batch)
-        loss, predict = graph.train()
+        loss, acc = graph.train()
         total_loss += loss
+        total_acc += acc
+        total_count += b * (l - 1)
     dev_acc = eval_on(dev_ds)
     test_acc = eval_on(test_ds)
 
     print("Epoch %d, "
           "time %d secs, "
           "train loss %.4f, "
+          "train accuracy %.4f, "
           "dev accuracy %.4f, "
-          "test accuracy %.4f" % (i, time() - stime, total_loss, dev_acc, test_acc))
+          "test accuracy %.4f" % (i, time() - stime, total_loss, total_acc / total_count, dev_acc, test_acc))
 
     graph.update.weight_decay()

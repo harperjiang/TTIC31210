@@ -21,8 +21,9 @@ class TrivialLoss(Loss):
         super().__init__()
 
     def loss(self, actual, expect, fortest):
+        n = actual.shape[1]
         if not fortest:
-            self.grad = np.ones_like(actual)
+            self.grad = np.ones_like(actual) / n
         self.acc = (actual == expect).sum()
         return actual.sum()
 

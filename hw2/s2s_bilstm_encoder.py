@@ -2,7 +2,7 @@ from time import time
 
 import numpy as np
 
-from logloss import LogLoss
+from lm_loss import LogLoss
 from lstm_dataset import S2SDataSet
 from lstm_graph import LSTMGraph
 from ndnn.node import Dot, Embed, SoftMax, Collect

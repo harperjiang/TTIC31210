@@ -41,11 +41,12 @@ class HingePredict(Node):
         # Actual has size B,H
         # Result has size B
 
-        return np.matmul(self.actual.value, self.allEmbed.value.T).argmin(axis = 1)
-
+        return np.matmul(self.actual.value, self.allEmbed.value.T).argmin(axis=1)
 
     def updateGrad(self):
         raise Exception("Operation not supported")
+
+
 
 class DummyContext:
     def attach_node(self, node):
