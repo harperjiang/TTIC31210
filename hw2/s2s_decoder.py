@@ -52,8 +52,8 @@ def lstm_encode(data):
     return decode_graph.h0, decode_graph.c0
 
 
-enc_bilstm_fwd_graph = LSTMGraph(None, None, dict_size, hidden_dim / 2)
-enc_bilstm_bcwd_graph = LSTMGraph(None, None, dict_size, hidden_dim / 2)
+enc_bilstm_fwd_graph = LSTMGraph(None, None, dict_size, int(hidden_dim / 2))
+enc_bilstm_bcwd_graph = LSTMGraph(None, None, dict_size, int(hidden_dim / 2))
 enc_bilstm_store = ParamStore('bilstm_encoder.mdl')
 enc_bilstm_params = enc_bilstm_store.load()
 
@@ -137,7 +137,7 @@ def eval_on(dataset):
         build_graph(btch)
         bsize, length = btch.data[1].shape
         loss, predict = decode_graph.test()
-        total += batch.size * (length - 1)
+        total += btch.size * (length - 1)
         accurate += predict
     return accurate / total
 
@@ -157,7 +157,7 @@ for i in range(epoch):
     total_acc = 0
     total_count = 0
     for batch in train_ds.batches(batch_size):
-        b, l = batch.data.shape
+        b, l = batch.data[1].shape
         build_graph(batch)
         loss, acc = decode_graph.train()
         total_loss += loss
