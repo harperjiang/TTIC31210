@@ -154,17 +154,23 @@ for i in range(epoch):
 
     stime = time()
     total_loss = 0
+    total_acc = 0
+    total_count = 0
     for batch in train_ds.batches(batch_size):
-        build_graph(batch[0])
-        loss, predict = decode_graph.train()
+        b, l = batch.data.shape
+        build_graph(batch)
+        loss, acc = decode_graph.train()
         total_loss += loss
+        total_acc += acc
+        total_count += b * (l - 1)
     dev_acc = eval_on(dev_ds)
     test_acc = eval_on(test_ds)
 
     print("Epoch %d, "
           "time %d secs, "
           "train loss %.4f, "
+          "train accuracy %.4f, "
           "dev accuracy %.4f, "
-          "test accuracy %.4f" % (i, time() - stime, total_loss, dev_acc, test_acc))
+          "test accuracy %.4f" % (i, time() - stime, total_loss, total_acc / total_count, dev_acc, test_acc))
 
     decode_graph.update.weight_decay()

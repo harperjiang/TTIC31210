@@ -20,8 +20,8 @@ dict_size = len(vocab_dict)
 hidden_dim = 100
 batch_size = 50
 
-fwd_graph = LSTMGraph(LogLoss(), Adam(eta=0.01, decay=0.99), dict_size, hidden_dim)
-bcwd_graph = LSTMGraph(LogLoss(), Adam(eta=0.01, decay=0.99), dict_size, hidden_dim)
+fwd_graph = LSTMGraph(LogLoss(), Adam(eta=0.001, decay=0.99), dict_size, hidden_dim)
+bcwd_graph = LSTMGraph(LogLoss(), Adam(eta=0.001, decay=0.99), dict_size, hidden_dim)
 
 
 def build_graph(batch):

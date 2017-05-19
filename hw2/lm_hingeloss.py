@@ -20,7 +20,7 @@ dict_size = len(vocab_dict)
 hidden_dim = 200
 batch_size = 50
 
-graph = LSTMGraph(HingeLoss(), Adam(eta=0.000002), dict_size, hidden_dim)
+graph = LSTMGraph(HingeLoss(), Adam(eta=0.001), dict_size, hidden_dim)
 
 lossEmbed = graph.param_of([dict_size, hidden_dim], Xavier())
 
