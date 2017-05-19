@@ -81,7 +81,7 @@ for i in range(epoch):
 
     if test_acc > best_test:
         best_test = test_acc
-        store.store(graph.params)
+        store.store(graph.dump())
 
     print("Epoch %d, "
           "time %d secs, "

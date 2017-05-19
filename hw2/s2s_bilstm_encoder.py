@@ -109,7 +109,7 @@ for i in range(epoch):
 
     if test_acc > best_test:
         best_test = test_acc
-        store.store(fwd_graph.params + bcwd_graph.params)
+        store.store(fwd_graph.dump()+ bcwd_graph.dump())
 
     print("Epoch %d, "
           "time %d secs, "

@@ -20,7 +20,7 @@ dict_size = len(vocab_dict)
 hidden_dim = 200
 batch_size = 50
 
-decode_graph = LSTMGraph(LogLoss(), Adam(eta=0.01, decay=0.99), dict_size, hidden_dim)
+decode_graph = LSTMGraph(LogLoss(), Adam(eta=0.001, decay=0.99), dict_size, hidden_dim)
 
 enc_lstm_graph = LSTMGraph(None, None, dict_size, hidden_dim)
 enc_lstm_store = ParamStore('lstm_encoder.mdl')
@@ -57,8 +57,8 @@ enc_bilstm_bcwd_graph = LSTMGraph(None, None, dict_size, hidden_dim / 2)
 enc_bilstm_store = ParamStore('bilstm_encoder.mdl')
 enc_bilstm_params = enc_bilstm_store.load()
 
-enc_bilstm_fwd_graph.load(enc_bilstm_params[0:len(enc_bilstm_params) / 2])
-enc_bilstm_bcwd_graph.load(enc_bilstm_params[len(enc_bilstm_params) / 2:])
+enc_bilstm_fwd_graph.load(enc_bilstm_params[0:int(len(enc_bilstm_params) / 2)])
+enc_bilstm_bcwd_graph.load(enc_bilstm_params[int(len(enc_bilstm_params) / 2):])
 
 
 def bilstm_encode(data):
