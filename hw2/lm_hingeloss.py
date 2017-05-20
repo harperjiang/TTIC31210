@@ -24,7 +24,7 @@ graph = LSTMGraph(HingeLoss(), Adam(eta=0.001), dict_size, hidden_dim)
 
 lossEmbed = graph.param_of([dict_size, hidden_dim], Xavier())
 
-numNegSamples = 100
+numNegSamples = 10
 negSamples = graph.input()
 
 
@@ -75,7 +75,7 @@ def eval_on(dataset):
 
 epoch = 100
 
-logfile = open('lm_hingeloss_c100.log', 'w')
+logfile = open('lm_hingeloss_c10.log', 'w')
 logfile.write("epoch,train_loss,train_acc,dev_acc,test_acc\n")
 
 init_dev = eval_on(dev_ds)
