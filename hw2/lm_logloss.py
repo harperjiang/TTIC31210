@@ -63,6 +63,9 @@ init_dev = eval_on(dev_ds)
 init_test = eval_on(test_ds)
 print("Initial dev accuracy %.4f, test accuracy %.4f" % (init_dev, init_test))
 
+logfile = open('lm_logloss.log', 'w')
+logfile.write("epoch,train_loss,train_acc,dev_acc,test_acc\n")
+
 for i in range(epoch):
 
     stime = time()
@@ -85,5 +88,7 @@ for i in range(epoch):
           "train accuracy %.4f, "
           "dev accuracy %.4f, "
           "test accuracy %.4f" % (i, time() - stime, total_loss, total_acc / total_count, dev_acc, test_acc))
+
+    logfile.write("%d,%.4f,%.4f,%.4f,%.4f\n" % (i, total_loss, total_acc / total_count, dev_acc, test_acc))
 
     graph.update.weight_decay()

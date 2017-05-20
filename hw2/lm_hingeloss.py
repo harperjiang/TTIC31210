@@ -73,6 +73,9 @@ def eval_on(dataset):
 
 epoch = 100
 
+logfile = open('lm_hingeloss.log', 'w')
+logfile.write("epoch,train_loss,train_acc,dev_acc,test_acc\n")
+
 init_dev = eval_on(dev_ds)
 init_test = eval_on(test_ds)
 print("Initial dev accuracy %.4f, test accuracy %.4f" % (init_dev, init_test))
@@ -98,5 +101,5 @@ for i in range(epoch):
           "dev accuracy %.4f, "
           "test accuracy %.4f" % (
           i, time() - stime, total_loss / total_record, total_predict / total_record, dev_acc, test_acc))
-
+    logfile.write("%d,%.4f,%.4f,%.4f,%.4f\n" % (i, total_loss, total_predict / total_record, dev_acc, test_acc))
     graph.update.weight_decay()
