@@ -73,10 +73,12 @@ def bilstm_encode(data):
     bcwd_h = enc_bilstm_bcwd_graph.h0
     bcwd_c = enc_bilstm_bcwd_graph.c0
 
-    fwd_h.value = np.zeros([b_size, hidden_dim / 2])
-    fwd_c.value = np.zeros([b_size, hidden_dim / 2])
-    bcwd_h.value = np.zeros([b_size, hidden_dim / 2])
-    bcwd_c.value = np.zeros([b_size, hidden_dim / 2])
+    half_hidden_dim = int(hidden_dim / 2)
+
+    fwd_h.value = np.zeros([b_size, half_hidden_dim])
+    fwd_c.value = np.zeros([b_size, half_hidden_dim])
+    bcwd_h.value = np.zeros([b_size, half_hidden_dim])
+    bcwd_c.value = np.zeros([b_size, half_hidden_dim])
 
     for idx in range(data_len):
         fwd_input_i = enc_bilstm_fwd_graph.input()
@@ -98,6 +100,8 @@ def bilstm_encode(data):
 
 
 def bow_encode(data):
+    decode_graph.h0.value = None
+    decode_graph.c0.value = None
     h0c0 = decode_graph.input()
     h0c0.value = data
 
@@ -115,7 +119,7 @@ def build_graph(batch):
     '''
     Change the function here to switch between encoders
     '''
-    h, c = lstm_encode(batch.data[0])
+    h, c = bow_encode(batch.data[0])
 
     outputs = []
     for idx in range(length - 1):
