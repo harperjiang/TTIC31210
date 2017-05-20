@@ -24,12 +24,11 @@ graph = LSTMGraph(HingeLoss(), Adam(eta=0.001), dict_size, hidden_dim)
 
 lossEmbed = graph.param_of([dict_size, hidden_dim], Xavier())
 
-numNegSamples = 200
-negSampleIdx = np.array([np.random.randint(low=0, high=dict_size) for i in range(numNegSamples)])
-
+numNegSamples = 100
 negSamples = graph.input()
-# negSamples.value = negSampleIdx
-negSamples.value = np.array(range(dict_size))
+
+
+# negSamples.value = np.array(range(dict_size))
 # v2c = graph.param_of([hidden_dim, dict_size], Xavier())
 
 graph.resetNum = len(graph.nodes)
@@ -39,6 +38,9 @@ def build_graph(batch):
     graph.reset()
     # Build Computation Graph according to length
     bsize, length = batch.data.shape
+
+    negSampleIdx = np.array([np.random.randint(low=0, high=dict_size) for i in range(numNegSamples)])
+    negSamples.value = negSampleIdx
 
     graph.h0.value = np.zeros([bsize, hidden_dim])
     graph.c0.value = np.zeros([bsize, hidden_dim])
@@ -73,7 +75,7 @@ def eval_on(dataset):
 
 epoch = 100
 
-logfile = open('lm_hingeloss.log', 'w')
+logfile = open('lm_hingeloss_c100.log', 'w')
 logfile.write("epoch,train_loss,train_acc,dev_acc,test_acc\n")
 
 init_dev = eval_on(dev_ds)
