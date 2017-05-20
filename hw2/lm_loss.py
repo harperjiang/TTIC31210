@@ -37,6 +37,13 @@ class LogLoss(Loss):
         predict = np.argmax(actual, axis=-1)
         self.acc = np.equal(predict, expect).sum()
 
+        # Record Error Detail
+        if 'errorStat' in self.__dict__:
+            pflat = predict.reshape(-1)
+            eflat = expect.reshape(-1)
+            for i in range(pflat.shape[0]):
+                self.errorStat.add(int(pflat[i]), int(eflat[i]))
+
         return -np.log(clipval).mean()
 
 
@@ -109,6 +116,13 @@ class HingeLoss(Loss):
         # Accuracy
         # B * L, N
         predict = np.argmax(np.matmul(htflat, embed.T), 1)
+
+        # Record Error Detail
+        if 'errorStat' in self.__dict__:
+            pflat = predict.reshape(-1)
+            eflat = expect.reshape(-1)
+            for i in range(pflat.shape[0]):
+                self.errorStat.add(int(pflat[i]), int(eflat[i]))
 
         self.acc = (predict == expect.reshape(-1)).sum()
 

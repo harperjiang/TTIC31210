@@ -1,0 +1,114 @@
+%%This is a very basic article template.
+%%There is just one section and two subsections.
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{parskip}
+\usepackage{xcolor} 
+\usepackage{cleveref}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+\setlength{\parskip}{0.3cm} 
+\setlength{\voffset}{-3cm}
+\setlength{\textheight}{9.5in}
+\title{TTIC 31210 Homework 2 \\ Spring 2017}
+
+\author{Hao Jiang}
+\begin{document}
+
+\maketitle
+\section{Language Modeling}
+
+\subsection{Implementation and Experimentation}
+The source code for implementing language model using log loss in in \texttt{lm\_logloss.py}. The experiment result is demonstrated in \Cref{fig:lm_logloss}. The best result is obtained at epoch , with training accuracy and test accuracy .
+
+\subsection{Error Analysis}
+\Cref{tab:logloss_top20} lists the top 20 error made by log loss on dev dataset. They can be generally categorized into the following types:
+\begin{enumerate}
+	\item \textbf{Name and Pronoun}. 
+
+Example: Bob - He, Bob - She, Bob - Sue, Bob - They. 
+
+These words appear at the same position of a sentence and is interchangable. Context is generally needed to decide which one is better in the sentence. Thus it is understandable that the model cannot distinguish between them.
+	\item \textbf{Was and Other Verbs}
+
+Example: was - decided, was - had, was - didn, was - 's, was - went
+
+The subjunctive verbs ``was'', as the word with highest frequency in training set, is used by the model to replace other verbs that may appear at the same position.
+	\item \textbf{Period and Conjective words}.
+
+Example: . - and 
+
+The model may fail to predict whether a sentence comes to an end or is followed by another subsentence connected by ``and''.
+
+	\item \textbf{Definite Article and Indefinite Article} 
+
+Example: a - the
+
+They are both article grammarly and in most of the time interchangable. 
+
+\end{enumerate}
+
+\begin{table}
+\centering
+\begin{tabular}{l|l|l}
+\textbf{Predict} & \textbf{GroundTruth} & \textbf{Count}\\
+\hline
+Bob&He&158\\
+\hline
+Bob&Sue&98\\
+\hline
+Bob&She&96\\
+\hline
+was&had&46\\
+\hline
+.&and&41\\
+\hline
+.&to&35\\
+\hline
+and&.&32\\
+\hline
+to&.&31\\
+\hline
+the&his&31\\
+\hline
+Bob&The&28\\
+\hline
+was&decided&28\\
+\hline
+Bob&They&25\\
+\hline
+was&didn&23\\
+\hline
+was&'s&22\\
+\hline
+his&the&22\\
+\hline
+was&went&22\\
+\hline
+Bob&But&19\\
+\hline
+Bob&His&19\\
+\hline
+Bob&When&19\\
+\hline
+a&the&18 \\
+\end{tabular}
+\caption{Top 20 Error Made by LogLoss}
+\label{tab:logloss_top20}
+\end{table}
+
+\subsection{Hinge Loss Implementation}
+The source code for implementing language model using log loss in in \texttt{lm\_hingeloss.py}. The experiment result is demonstrated in \Cref{fig:lm_hingeloss}. The best result is obtained at epoch , with training accuracy and test accuracy .
+
+\subsection{Hinge Loss Experiments}
+
+We 
+
+\subsection{Loss Function Comparison and Analysis}
+
+\end{document}

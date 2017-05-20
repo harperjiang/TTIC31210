@@ -8,6 +8,7 @@ from lstm_graph import LSTMGraph
 from ndnn.node import Dot, Embed, SoftMax, Collect
 from ndnn.sgd import Adam
 from vocab_dict import get_dict
+from error_stat import ErrorStat
 
 vocab_dict, idx_dict = get_dict()
 
@@ -20,7 +21,6 @@ hidden_dim = 200
 batch_size = 50
 
 graph = LSTMGraph(LogLoss(), Adam(eta=0.001, decay=0.99), dict_size, hidden_dim)
-
 
 def build_graph(batch):
     graph.reset()
@@ -92,3 +92,12 @@ for i in range(epoch):
     logfile.write("%d,%.4f,%.4f,%.4f,%.4f\n" % (i, total_loss, total_acc / total_count, dev_acc, test_acc))
 
     graph.update.weight_decay()
+
+# Collect Error Detail
+graph.loss.errorStat = ErrorStat()
+eval_on(dev_ds)
+
+print("Top 20 Error Detail:")
+
+for item in graph.loss.errorStat.top(20):
+    print("%s,%s,%d" % (idx_dict[item[0][0]], idx_dict[item[0][1]], item[1]))
