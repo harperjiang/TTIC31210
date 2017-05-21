@@ -9,6 +9,7 @@ from ndnn.init import Xavier
 from ndnn.node import Embed, Collect
 from ndnn.sgd import Adam
 from vocab_dict import get_dict
+from report_stat import LogFile, SentenceLog
 
 vocab_dict, idx_dict = get_dict()
 
@@ -26,7 +27,6 @@ lossEmbed = graph.param_of([dict_size, hidden_dim], Xavier())
 
 numNegSamples = 10
 negSamples = graph.input()
-
 
 # negSamples.value = np.array(range(dict_size))
 # v2c = graph.param_of([hidden_dim, dict_size], Xavier())
@@ -63,24 +63,28 @@ def build_graph(batch):
 def eval_on(dataset):
     total = 0
     accurate = 0
+    total_loss = 0
 
     for batch in dataset.batches(batch_size):
         bsize, length = batch.data.shape
         build_graph(batch)
         loss, predict = graph.test()
         total += batch.size * (length - 1)
+        total_loss += loss
         accurate += predict
-    return accurate / total
+    return total_loss / total, accurate / total
 
 
 epoch = 100
+enable_slog = False
 
-logfile = open('lm_hingeloss_c10.log', 'w')
-logfile.write("epoch,train_loss,train_acc,dev_acc,test_acc\n")
-
-init_dev = eval_on(dev_ds)
-init_test = eval_on(test_ds)
+logfile = LogFile('lm_hingeloss_all.log')
+slog = SentenceLog('lm_hingeloss_sent_all.log')
+init_dev_loss, init_dev = eval_on(dev_ds)
+init_test_loss, init_test = eval_on(test_ds)
 print("Initial dev accuracy %.4f, test accuracy %.4f" % (init_dev, init_test))
+
+origin_time = time()
 
 for i in range(epoch):
 
@@ -94,14 +98,26 @@ for i in range(epoch):
         total_loss += loss
         total_predict += predict
         total_record += batch.size * (batch.data.shape[1] - 1)
-    dev_acc = eval_on(dev_ds)
-    test_acc = eval_on(test_ds)
+        if enable_slog:
+            dev_loss, dev_acc = eval_on(dev_ds)
+            slog.add_record(batch.size, dev_acc)
+
+    train_time = time() - stime
+    train_loss = total_loss / total_record
+    train_acc = total_predict / total_record
+    dev_loss, dev_acc = eval_on(dev_ds)
+    test_loss, test_acc = eval_on(test_ds)
 
     print("Epoch %d, time %d secs, "
+          "train time %d secs, "
           "train loss %.4f, "
           "train accuracy %.4f, "
           "dev accuracy %.4f, "
           "test accuracy %.4f" % (
-          i, time() - stime, total_loss / total_record, total_predict / total_record, dev_acc, test_acc))
-    logfile.write("%d,%.4f,%.4f,%.4f,%.4f\n" % (i, total_loss, total_predict / total_record, dev_acc, test_acc))
+              i, time() - stime, train_time, train_loss, train_acc, dev_acc,
+              test_acc))
+    logfile.add_record(i, time() - origin_time, train_time, train_loss, train_acc, dev_loss, dev_acc, test_acc)
     graph.update.weight_decay()
+
+logfile.close()
+slog.close()

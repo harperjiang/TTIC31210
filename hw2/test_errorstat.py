@@ -1,5 +1,5 @@
 import unittest
-from error_stat import ErrorStat
+from report_stat import ErrorStat
 
 
 class TestErrorStat(unittest.TestCase):

@@ -8,7 +8,7 @@ from lstm_graph import LSTMGraph
 from ndnn.node import Dot, Embed, SoftMax, Collect
 from ndnn.sgd import Adam
 from vocab_dict import get_dict
-from error_stat import ErrorStat
+from report_stat import ErrorStat, LogFile, SentenceLog
 
 vocab_dict, idx_dict = get_dict()
 
@@ -21,6 +21,7 @@ hidden_dim = 200
 batch_size = 50
 
 graph = LSTMGraph(LogLoss(), Adam(eta=0.001, decay=0.99), dict_size, hidden_dim)
+
 
 def build_graph(batch):
     graph.reset()
@@ -47,31 +48,37 @@ def build_graph(batch):
 def eval_on(dataset):
     total = 0
     accurate = 0
+    total_loss = 0
 
     for batch in dataset.batches(batch_size):
         bsize, length = batch.data.shape
         build_graph(batch)
         loss, predict = graph.test()
         total += batch.size * (length - 1)
+        total_loss += loss
         accurate += predict
-    return accurate / total
+    return total_loss / total, accurate / total
 
 
 epoch = 100
+enable_slog = False
 
-init_dev = eval_on(dev_ds)
-init_test = eval_on(test_ds)
+init_dev_loss, init_dev = eval_on(dev_ds)
+init_test_loss, init_test = eval_on(test_ds)
 print("Initial dev accuracy %.4f, test accuracy %.4f" % (init_dev, init_test))
 
-logfile = open('lm_logloss.log', 'w')
-logfile.write("epoch,train_loss,train_acc,dev_acc,test_acc\n")
+logfile = LogFile('lm_logloss.log')
+slog = SentenceLog('lm_logloss_sent.log')
+
+origin_time = time()
 
 for i in range(epoch):
 
-    stime = time()
     total_loss = 0
     total_acc = 0
     total_count = 0
+
+    stime = time()
     for batch in train_ds.batches(batch_size):
         b, l = batch.data.shape
         build_graph(batch)
@@ -79,19 +86,32 @@ for i in range(epoch):
         total_loss += loss
         total_acc += acc
         total_count += b * (l - 1)
-    dev_acc = eval_on(dev_ds)
-    test_acc = eval_on(test_ds)
+        if enable_slog:
+            dev_loss, dev_acc = eval_on(dev_ds)
+            slog.add_record(batch.size, dev_acc)
+
+    train_time = time() - stime
+    train_loss = total_loss / total_count
+    train_acc = total_acc / total_count
+
+    dev_loss, dev_acc = eval_on(dev_ds)
+    test_loss, test_acc = eval_on(test_ds)
 
     print("Epoch %d, "
           "time %d secs, "
           "train loss %.4f, "
           "train accuracy %.4f, "
           "dev accuracy %.4f, "
-          "test accuracy %.4f" % (i, time() - stime, total_loss, total_acc / total_count, dev_acc, test_acc))
+          "test accuracy %.4f" % (
+              i, time() - stime, train_loss, train_acc, dev_acc, test_acc))
 
-    logfile.write("%d,%.4f,%.4f,%.4f,%.4f\n" % (i, total_loss, total_acc / total_count, dev_acc, test_acc))
+    logfile.add_record(
+        i, time() - origin_time, train_time, train_loss, train_acc, dev_loss, dev_acc, test_acc)
 
     graph.update.weight_decay()
+
+logfile.close()
+slog.close()
 
 # Collect Error Detail
 graph.loss.errorStat = ErrorStat()
