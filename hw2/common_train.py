@@ -1,4 +1,5 @@
 from time import time
+
 from ndnn.store import ParamStore
 from report_stat import LogFile, ErrorStat
 
@@ -18,8 +19,8 @@ def eval_on(dataset, graph, batch_size):
 
 
 def train(idx_dict, epoch, logname, graph, train_ds, dev_ds, test_ds, batch_size):
-    logfile = LogFile(logname)
-    store = ParamStore(logname)
+    logfile = LogFile(logname + ".log")
+    store = ParamStore(logname + ".mdl")
 
     init_dev_loss, init_dev = eval_on(dev_ds, graph, batch_size)
     init_test_loss, init_test = eval_on(test_ds, graph, batch_size)

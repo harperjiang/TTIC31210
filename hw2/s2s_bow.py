@@ -17,4 +17,4 @@ batch_size = 50
 
 graph = BowEncodeGraph(LogLoss(), Adam(eta=0.001, decay=0.99), dict_size, hidden_dim)
 
-train(idx_dict, 100, 's2s_bow.log', graph, train_ds, dev_ds, test_ds, 50)
+train(idx_dict, 100, 's2s_bow', graph, train_ds, dev_ds, test_ds, 50)
