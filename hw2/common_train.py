@@ -74,10 +74,13 @@ class Trainer(object):
         graph.loss.errorStat = ErrorStat()
         self.eval_on(dev_ds)
 
-        print("Top 20 Error Detail:")
+        error_file = open(logfile + '.err','w')
+
+        error_file.write("Top 20 Error Detail:\n")
 
         for item in graph.loss.errorStat.top(20):
-            print("%s,%s,%d" % (idx_dict[item[0][0]], idx_dict[item[0][1]], item[1]))
+            error_file.write("%s,%s,%d\n" % (idx_dict[item[0][0]], idx_dict[item[0][1]], item[1]))
+        error_file.close()
 
     def data_length(self, data):
         if isinstance(data, list):
