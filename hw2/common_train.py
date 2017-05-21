@@ -74,7 +74,7 @@ class Trainer(object):
         graph.loss.errorStat = ErrorStat()
         self.eval_on(dev_ds)
 
-        error_file = open(logfile + '.err','w')
+        error_file = open(logname + '.err','w')
 
         error_file.write("Top 20 Error Detail:\n")
 
