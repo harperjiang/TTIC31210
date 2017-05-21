@@ -27,7 +27,7 @@ all_graph = HingeGraph(Adam(eta=0.001), dict_size, hidden_dim, -1, True)
 trainer.train(idx_dict, 100, 'lm_hingeloss_all', all_graph, train_ds, dev_ds, test_ds, 50)
 
 r100_graph = HingeGraph(Adam(eta=0.001), dict_size, hidden_dim, 100, True)
-trainer.train(idx_dict, 100, 'lm_hingeloss_r100', all_graph, train_ds, dev_ds, test_ds, 50)
+trainer.train(idx_dict, 100, 'lm_hingeloss_r100', r100_graph, train_ds, dev_ds, test_ds, 50)
 
 r10_graph = HingeGraph(Adam(eta=0.001), dict_size, hidden_dim, 10, True)
-trainer.train(idx_dict, 100, 'lm_hingeloss_r10', all_graph, train_ds, dev_ds, test_ds, 50)
+trainer.train(idx_dict, 100, 'lm_hingeloss_r10', r10_graph, train_ds, dev_ds, test_ds, 50)
