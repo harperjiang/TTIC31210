@@ -1,4 +1,4 @@
-from common_train import train
+from common_train import Trainer
 from lm_loss import LogLoss
 from lstm_dataset import S2SDataSet
 from lstm_graph import BowEncodeGraph
@@ -15,6 +15,7 @@ dict_size = len(vocab_dict)
 hidden_dim = 200
 batch_size = 50
 
-graph = BowEncodeGraph(LogLoss(), Adam(eta=0.001, decay=0.99), dict_size, hidden_dim)
+trainer = Trainer()
 
-train(idx_dict, 100, 's2s_bow', graph, train_ds, dev_ds, test_ds, 50)
+graph = BowEncodeGraph(LogLoss(), Adam(eta=0.001, decay=0.99), dict_size, hidden_dim)
+trainer.train(idx_dict, 100, 's2s_bow', graph, train_ds, dev_ds, test_ds, 50)

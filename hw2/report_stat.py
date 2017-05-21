@@ -23,7 +23,7 @@ class SentenceLog:
 
     def add_record(self, n, acc):
         self.num_sentence += n
-        self.logfile.write("%d,%.4f" % (self.num_sentence, acc))
+        self.logfile.write("%d,%.4f\n" % (self.num_sentence, acc))
 
     def close(self):
         self.logfile.close()

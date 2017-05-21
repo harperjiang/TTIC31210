@@ -1,6 +1,6 @@
 from common_train import Trainer
 from lstm_dataset import LSTMDataSet
-from lstm_graph import HingeGraph
+from lstm_graph import HingeGraph, LogGraph
 from ndnn.sgd import Adam
 from vocab_dict import get_dict
 
@@ -15,6 +15,9 @@ hidden_dim = 200
 batch_size = 50
 
 trainer = Trainer()
+
+loss_graph = LogGraph(Adam(eta=0.001), dict_size, hidden_dim)
+trainer.train(idx_dict, 100, 'lm_logloss', loss_graph, train_ds, dev_ds, test_ds, 50)
 
 # Share Embedding
 sem_graph = HingeGraph(Adam(eta=0.001), dict_size, hidden_dim, -1, False)

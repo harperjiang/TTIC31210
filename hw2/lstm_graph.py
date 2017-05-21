@@ -1,5 +1,6 @@
 import numpy as np
 
+from lm_loss import LogLoss, HingeLoss, HingeLossOutput
 from ndnn.graph import Graph
 from ndnn.init import Xavier, Zero
 from ndnn.node import Concat, Sigmoid, Add, Dot, Tanh, Mul, Collect, Embed, SoftMax, MDEmbed, Average
@@ -8,6 +9,9 @@ from ndnn.node import Concat, Sigmoid, Add, Dot, Tanh, Mul, Collect, Embed, Soft
 class LSTMGraph(Graph):
     def __init__(self, loss, update, dict_size, hidden_dim):
         super().__init__(loss, update)
+
+        self.dict_size = dict_size
+        self.hidden_dim = hidden_dim
 
         self.h0 = self.input()
         self.c0 = self.input()
@@ -40,6 +44,74 @@ class LSTMGraph(Graph):
         c_next = Add(Mul(f_gate, c), Mul(i_gate, c_temp))
         h_next = Mul(o_temp, Tanh(c_next))
         return h_next, c_next
+
+
+class LogGraph(LSTMGraph):
+    def __init__(self, update, dict_size, hidden_dim):
+        super().__init__(LogLoss(), update, dict_size, hidden_dim)
+
+    def build_graph(self, batch):
+        self.reset()
+        # Build Computation Graph according to length
+        bsize, length = batch.data.shape
+
+        self.h0.value = np.zeros([bsize, self.hidden_dim])
+        self.c0.value = np.zeros([bsize, self.hidden_dim])
+
+        h = self.h0
+        c = self.c0
+        outputs = []
+        for idx in range(length - 1):
+            in_i = self.input()
+            in_i.value = batch.data[:, idx]  # Get value from batch
+            x = Embed(in_i, self.embed)
+            h, c = self.lstm_cell(x, h, c)
+            out_i = SoftMax(Dot(h, self.v2c))
+            outputs.append(out_i)
+        self.output(Collect(outputs))
+        self.expect(batch.data[:, 1:])
+
+
+class HingeGraph(LSTMGraph):
+    def __init__(self, update, dict_size, hidden_dim, num_neg_sample, sep_embed):
+        super().__init__(HingeLoss(), update, dict_size, hidden_dim)
+        self.num_neg_sample = num_neg_sample
+
+        self.neg_sample = self.input()
+        if sep_embed:
+            self.sample_embed = self.param_of([dict_size, hidden_dim], Xavier())
+        else:
+            self.sample_embed = self.embed
+
+        self.resetNum = len(self.nodes)
+
+    def build_graph(self, batch):
+        self.reset()
+        # Build Computation Graph according to length
+        bsize, length = batch.data.shape
+
+        if self.num_neg_sample == -1:
+            negSampleIdx = range(self.dict_size)
+        else:
+            negSampleIdx = np.array([np.random.randint(low=0, high=self.dict_size) for i in range(self.num_neg_sample)])
+        self.neg_sample.value = np.int32(negSampleIdx)
+
+        self.h0.value = np.zeros([bsize, self.hidden_dim])
+        self.c0.value = np.zeros([bsize, self.hidden_dim])
+
+        h = self.h0
+        c = self.c0
+        outputs = []
+        for idx in range(length - 1):
+            in_i = self.input()
+            in_i.value = batch.data[:, idx]  # Get value from batch
+            x = Embed(in_i, self.embed)
+            h, c = self.lstm_cell(x, h, c)
+
+            outputs.append(h)
+
+        self.output(HingeLossOutput(Collect(outputs), self.sample_embed, self.neg_sample))
+        self.expect(batch.data[:, 1:])
 
 
 class LSTMEncodeGraph(Graph):
