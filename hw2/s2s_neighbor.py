@@ -18,15 +18,15 @@ hidden_dim = 200
 batch_size = 50
 
 lstm_encode_graph = LSTMEncodeGraph(LogLoss(), Adam(eta=0.001), dict_size, hidden_dim)
-lstm_encode_store = ParamStore("s2s_lstm.mdl")
+lstm_encode_store = ParamStore("model/s2s_lstm.mdl")
 lstm_encode_graph.load(lstm_encode_store.load())
 
 bilstm_encode_graph = BiLSTMEncodeGraph(LogLoss(), Adam(eta=0.001), dict_size, hidden_dim)
-bilstm_encode_store = ParamStore("s2s_bilstm.mdl")
+bilstm_encode_store = ParamStore("model/s2s_bilstm.mdl")
 bilstm_encode_graph.load(bilstm_encode_store.load())
 
 bow_encode_graph = BowEncodeGraph(LogLoss(), Adam(eta=0.001), dict_size, hidden_dim)
-bow_encode_store = ParamStore("s2s_bow.mdl")
+bow_encode_store = ParamStore("model/s2s_bow.mdl")
 bow_encode_graph.load(bow_encode_store.load())
 
 encode_graphs = [lstm_encode_graph, bilstm_encode_graph, bow_encode_graph]

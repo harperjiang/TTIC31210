@@ -23,35 +23,25 @@
 \maketitle
 \section{Language Modeling}
 
+In all the experiments mentioned in this section, I use Adam with learning rate $\eta = 0.001$ to update parameters. The hyper-parameters follow the default value suggested in the original paper, that is, $\beta_1=0.9, \beta_2 = 0.999$. I use a mini-batching of size 50.
+
 \subsection{Implementation and Experimentation}
-The source code for implementing language model using log loss in in \texttt{lm\_logloss.py}. The experiment result is demonstrated in \Cref{fig:lm_logloss}. The best result is obtained at epoch , with training accuracy and test accuracy .
+The source code for implementing language model using log loss in in \texttt{lm\_logloss.py}. The experiment result is demonstrated in \Cref{fig:lm_logloss}. The best test accuracy 33.66\% is obtained at epoch 24 , with training accuracy 38.46\% and dev accuracy 33.93\%.
+
+\begin{figure}
+\centering
+\begin{tikzpicture}
+\begin{axis}[xlabel={Epoch}, ylabel={Accuracy},legend entries={Train, Dev, Test}]
+\addplot[mark = none, blue] table[x=epoch,y=train_acc,col sep=comma] {data/lm_logloss.log};
+\addplot[mark = none, red] table[x=epoch,y=dev_acc,col sep=comma] {data/lm_logloss.log};
+\addplot[mark = none, black] table[x=epoch,y=test_acc,col sep=comma] {data/lm_logloss.log};
+\end{axis}
+\end{tikzpicture}
+\caption{Language Model - LogLoss}
+\label{fig:lm_logloss}
+\end{figure}
 
 \subsection{Error Analysis}
-\Cref{tab:logloss_top20} lists the top 20 error made by log loss on dev dataset. They can be generally categorized into the following types:
-\begin{enumerate}
-	\item \textbf{Name and Pronoun}. 
-
-Example: Bob - He, Bob - She, Bob - Sue, Bob - They. 
-
-These words appear at the same position of a sentence and is interchangable. Context is generally needed to decide which one is better in the sentence. Thus it is understandable that the model cannot distinguish between them.
-	\item \textbf{Was and Other Verbs}
-
-Example: was - decided, was - had, was - didn, was - 's, was - went
-
-The subjunctive verbs ``was'', as the word with highest frequency in training set, is used by the model to replace other verbs that may appear at the same position.
-	\item \textbf{Period and Conjective words}.
-
-Example: . - and 
-
-The model may fail to predict whether a sentence comes to an end or is followed by another subsentence connected by ``and''.
-
-	\item \textbf{Definite Article and Indefinite Article} 
-
-Example: a - the
-
-They are both article grammarly and in most of the time interchangable. 
-
-\end{enumerate}
 
 \begin{table}
 \centering
@@ -102,13 +92,308 @@ a&the&18 \\
 \label{tab:logloss_top20}
 \end{table}
 
+\Cref{tab:logloss_top20} lists the top 20 error made by log loss on dev dataset. They can be generally categorized into the following types:
+\begin{enumerate}
+	\item \textbf{Name and Pronoun}. 
+
+Example: Bob - He, Bob - She, Bob - Sue, Bob - They. 
+
+These words appear at the same position of a sentence and is interchangable. Context is generally needed to decide which one is better in the sentence. Thus it is understandable that the model cannot distinguish between them.
+	\item \textbf{Was and Other Verbs}
+
+Example: was - decided, was - had, was - didn, was - 's, was - went
+
+The subjunctive verbs ``was'', as the word with highest frequency in training set, is used by the model to replace other verbs that may appear at the same position.
+	\item \textbf{Period and Conjective words}.
+
+Example: . - and 
+
+The model may fail to predict whether a sentence comes to an end or is followed by another subsentence connected by ``and''.
+
+	\item \textbf{Definite Article and Indefinite Article} 
+
+Example: a - the
+
+They are both article grammarly and in most of the time interchangable. 
+\end{enumerate}
+
 \subsection{Hinge Loss Implementation}
-The source code for implementing language model using log loss in in \texttt{lm\_hingeloss.py}. The experiment result is demonstrated in \Cref{fig:lm_hingeloss}. The best result is obtained at epoch , with training accuracy and test accuracy .
+The source code for implementing language model using log loss in in \texttt{lm\_hingeloss.py}. 
 
 \subsection{Hinge Loss Experiments}
 
-We 
+\textbf{a)}
+In \Cref{fig:hinge_log}, we compare the result between log loss and hinge loss when NEG equals the entire vocabulary and use $emb = emb_i$. It can be seen that HingeLoss has a lower best test accuracy, and takes more epochs to converge to the best result (around 25 more epochs)
+
+\begin{figure}
+\centering
+\begin{tikzpicture}
+\begin{axis}[xlabel={Epoch}, ylabel={Test Accuracy},legend entries={LogLoss, HingeLoss}]
+\addplot[mark = none, blue] table[x=epoch,y=test_acc,col sep=comma] {data/lm_logloss.log};
+\addplot[mark = none, red] table[x=epoch,y=test_acc,col sep=comma] {data/lm_hingeloss_sem.log};
+\end{axis}
+\end{tikzpicture}
+\caption{Test Accuracy - Hinge Loss vs. Log Loss}
+\label{fig:hinge_log}
+\end{figure}
+
+\textbf{b)}
+In \Cref{fig:hinge_2}, we show that when $emb \neq emb_i$, Hinge Loss is able to achieve a higher test accuracy (31.42\% vs. 30.48\%) and takes less epochs to reach it (10 epochs faster).
+
+\begin{figure}
+\centering
+\begin{tikzpicture}
+\begin{axis}[xlabel={Epoch}, ylabel={Test Accuracy},legend entries={Separate Embedding, Same Embedding}, legend style={at = {(0,1)}, anchor=south west}]
+\addplot[mark = none, blue] table[x=epoch,y=test_acc,col sep=comma] {data/lm_hingeloss_all.log};
+\addplot[mark = none, red] table[x=epoch,y=test_acc,col sep=comma] {data/lm_hingeloss_sem.log};
+\end{axis}
+\end{tikzpicture}
+\caption{Test Accuracy - Hinge Loss with Separated Embedding}
+\label{fig:hinge_2}
+\end{figure}
+
+\textbf{c)} \Cref{fig:hinge_3} shows the experiments with different negative sample size (all vocabularies, e.g., 1498, 100 and 10). It can be seen that although a larger negative sample size brings higher accuracy, the difference is not that much. Especially, using negative sample size 100 almost achieve same level of accuracy with the case when using all vocabulary as negative sample.
+
+\begin{figure}
+\centering
+\begin{tikzpicture}
+\begin{axis}[xlabel={Epoch}, ylabel={Test Accuracy},legend entries={All, 100, 10}, legend style={at = {(0,1)}, anchor=south west}]
+\addplot[mark = none, blue] table[x=epoch,y=test_acc,col sep=comma] {data/lm_hingeloss_all.log};
+\addplot[mark = none, red] table[x=epoch,y=test_acc,col sep=comma] {data/lm_hingeloss_r100.log};
+\addplot[mark = none, black] table[x=epoch,y=test_acc,col sep=comma] {data/lm_hingeloss_r10.log};
+\end{axis}
+\end{tikzpicture}
+\caption{Test Accuracy - Hinge Loss with different Negative Sample Size}
+\label{fig:hinge_3}
+\end{figure}
 
 \subsection{Loss Function Comparison and Analysis}
+\textbf{a)} \Cref{tab:sent_sec} shows the \#sents/sec values for the three losses. This number is computed using the following formula:
+\[
+\frac{\text{size of training set}}{\text{average training time}}
+\]
+\begin{table}
+\begin{tabular}{c|c|c|c}
+\textbf{Loss} & Log Loss & Hinge Loss - All Vocab & Hinge Loss - r = 10 \\
+\hline
+\textbf{Value} & 431.1& 503&603.6 \\
+\end{tabular}
+\caption{Comparison of \#Sentences / Sec}
+\label{tab:sent_sec}
+\end{table}
+
+\textbf{b,c,d)} 
+
+\Cref{fig:ns_devacc} demonstrates how Dev accuracy varies with number of sentences processed and \Cref{fig:wc_devacc} shows how dev accuracy improves with wall clock time. From these figures, it can be observed that LogLoss takes both shorter wall clock time and less number of sentences to achieve its peak dev accuracy. In addition, a smaller negative sample in Hinge Loss has negative impact to both the training time needed and epochs needed to reach the peak dev accuracy.
+\begin{figure}
+\centering
+\begin{tikzpicture}
+\begin{axis}[xlabel={Number of Sentences}, ylabel={Dev Accuracy},legend entries={LogLoss, HingeLoss-All, HingeLoss-10}, legend style={at = {(0,1)}, anchor=south west}]
+\addplot[mark = none, blue] table[x expr={\thisrowno{0}*6036},y=dev_acc,col sep=comma] {data/lm_logloss.log};
+\addplot[mark = none, red] table[x expr={\thisrowno{0}*6036},y=dev_acc,col sep=comma] {data/lm_hingeloss_all.log};
+\addplot[mark = none, black] table[x expr={\thisrowno{0}*6036},y=dev_acc,col sep=comma] {data/lm_hingeloss_r10.log};
+\end{axis}
+\end{tikzpicture}
+\caption{Dev Accuracy with Number of Sentences Processed}
+\label{fig:ns_devacc}
+\end{figure}
+
+\begin{figure}
+\centering
+\begin{tikzpicture}
+\begin{axis}[xlabel={Wall Clock Time (sec)}, ylabel={Dev Accuracy},legend entries={LogLoss, HingeLoss-All, HingeLoss-10}, legend style={at = {(0,1)}, anchor=south west}]
+\addplot[mark = none, blue] table[x=wall_clock,y=dev_acc,col sep=comma] {data/lm_logloss.log};
+\addplot[mark = none, red] table[x=wall_clock,y=dev_acc,col sep=comma] {data/lm_hingeloss_all.log};
+\addplot[mark = none, black] table[x=wall_clock,y=dev_acc,col sep=comma] {data/lm_hingeloss_r10.log};
+\end{axis}
+\end{tikzpicture}
+\caption{Dev Accuracy with Wall Clock Time}
+\label{fig:wc_devacc}
+\end{figure}
+
+\textbf{e)}
+The relationship between dev loss and dev accuracy in Log Loss is demonstrated in \Cref{fig:logloss_acc_loss}. It can be seen that when dev loss reaches its minimum, dev accuracy reaches it's maximum.
+\begin{figure}
+\centering
+\begin{tikzpicture}
+\begin{axis}[xlabel={Epoch}, ylabel={Data},legend entries={Dev Accuracy, Dev Loss}, legend style={at = {(0,1)}, anchor=south west}]
+\addplot[mark = none, blue] table[x=epoch,y=dev_acc,col sep=comma] {data/lm_logloss.log};
+\addplot[mark = none, red] table[x=epoch,y expr={\thisrowno{5}*10},col sep=comma] {data/lm_logloss.log};
+\end{axis}
+\end{tikzpicture}
+\caption{Log Loss - Dev Accuracy with Dev Loss}
+\label{fig:logloss_acc_loss}
+\end{figure}
+
+\textbf{f)}
+For Hinge Loss, the result is shown in \Cref{fig:hingeloss_acc_loss}. Different from the observation in Log Loss, now the dev accuracy occurs at totally different time point from the dev loss. The peak value of dev accuracy appears much slower than the minimum of dev loss.
+\begin{figure}
+\centering
+\begin{tikzpicture}
+\begin{axis}[xlabel={Epoch}, ylabel={Data},legend entries={Dev Accuracy, Dev Loss}, legend style={at = {(0,1)}, anchor=south west}]
+\addplot[mark = none, blue] table[x=epoch,y=dev_acc,col sep=comma] {data/lm_hingeloss_all.log};
+\addplot[mark = none, red] table[x=epoch,y expr={\thisrowno{5}/1000},col sep=comma] {data/lm_hingeloss_all.log};
+\end{axis}
+\end{tikzpicture}
+\caption{Hinge Loss - Dev Accuracy with Dev Loss}
+\label{fig:hingeloss_acc_loss}
+\end{figure}
+
+\textbf{g, h)}
+From \Cref{fig:logloss_acc_loss} and \Cref{fig:hingeloss_acc_loss}, it can be seen that when training with Log Loss, after reaching the optimal point, training more epochs does not help improving the dev accuracy and reduce the loss. Instead, the dev accuracy begins to drop and dev loss begins to increase. The same thing happens to the case when using Hinge Loss. This is caused by the overfitting on training data.
+
+\textbf{i}
+If I have a very large training set, I will use Log Loss. Although Hinge Loss takes less time for each epoch, it takes more epochs and thus longer time to achieve its best result. On the contrast, Log Loss takes slightly longer time for each epoch, but use much less epochs to reach its optimum. Thus Log Loss should be a better choice.
+
+\section{Sequence-to-Sequence Models}
+In this section, all the experiments use a similar hyper parameter setting as is in Language model. In addition, we use log loss for all the decoder evaluation.
+\subsection{Encoder Implementation and Empirical Comparison}
+\textbf{a,b,c)} 
+
+The code of using forward LSTM encoder is shown in \texttt{s2s\_lstm.py}, 
+the code of using Bi-directional LSTM encoder is shown in \texttt{s2s\_bilstm.py}, and 
+the code of using Bag-of-Word encoder is shown in \texttt{s2s\_bow.py}. 
+
+\Cref{fig:encoder} shows the test accuracy when using this model and the log loss LSTM with no encoder model. It can be seen the two model have similar convergence trends. They both use 20-25 epochs to reach the best test accuracy. However, LSTM with encoder performs much better than the one with no encoder, and is able to achieve 36\% test accuracy. Bi-directional LSTM does not improve test accuracy, however, it reduce the number of epochs needed to train the model. It uses around 5 less epochs to achieve the best result. 
+
+In my Bag-of-Word implementation, I simply use the average of previous words as both the hidden state and cell state for the decoder. Interestingly, although this model is much similar than the previous two encoders, it performs almost equally well, while using only 2/3 of the time of the previous two (Average time per epoch: LSTM 36 secs, Bi-LSTM 38 secs, Bag-of-Word 22 secs).
+\begin{figure}
+\centering
+\begin{tikzpicture}
+\begin{axis}[xlabel={Epoch}, ylabel={Test Accuracy},legend entries={No Encoder,LSTM, Bi-LSTM, Bag-of-Word}, legend style={at = {(0,1)}, anchor=south west}]
+\addplot[mark = none, blue] table[x=epoch,y=test_acc,col sep=comma] {data/lm_logloss.log};
+\addplot[mark = none, red] table[x=epoch,y=test_acc,col sep=comma] {data/s2s_lstm.log};
+\addplot[mark = none, black] table[x=epoch,y=test_acc,col sep=comma] {data/s2s_bilstm.log};
+\addplot[mark = none, green] table[x=epoch,y=test_acc,col sep=comma] {data/s2s_bow.log};
+\end{axis}
+\end{tikzpicture}
+\caption{Use Encoders to improve Test Accuracy}
+\label{fig:encoder}
+\end{figure}
+
+\subsection{Error Analysis}
+The top 20 most frequent error made by forward-LSTM model is shown in \Cref{tab:lstm_top20}.
+
+The following error categories can be observed.
+
+\begin{enumerate}
+\item \textbf{Name and Pronoun} This category also appears in Log Loss error.
+\item \textbf{Was and other Verb} This category also appears in Log Loss error. However, here ``was'' is no longer dominating. There are cases ground truth is ``was'' but the model generates ``had".
+\item \textbf{Definite and Indefinite Article} This category also appears in Log Loss error.
+\item \textbf{Period, Conjective Word and Other Symbol} 
+
+Example: ``." - ``!" , ``." - ``,". ``.'' - for
+
+This is a new category. Exclamation mark and period is in most of the time interchangeable (some people use exclamation mark to replace all periods, especially on Internet) and is hard to distinguish. In addition, generating a period when comma and other conjective words are expected shows that the model tends to generate shorter sentence.
+
+\end{enumerate}
+
+When comparing the number of errors in each case to the Log Loss result(\Cref{tab:logloss_top20}), it can be noticed that the absolute number of errors is much smaller with forward-LSTM encoder model. For example, in previous model, top 5 errors count in total 439 errors, while in this model, all top 20 errors together count for only 405 errors. Especially, forward-LSTM encoder greatly reduce the number of errors between name and pronouns. In the old model, top errors all belong to this category, while in new model, the error in this category is reduced by over 80\%.
+\begin{table}
+\centering
+\begin{tabular}{l|l|l}
+\textbf{Predict} & \textbf{GroundTruth} & \textbf{Count}\\
+to&.&33\\\hline
+.&and&27\\\hline
+.&to&26\\\hline
+the&his&26\\\hline
+He&Bob&26\\\hline
+Bob&He&25\\\hline
+and&.&24\\\hline
+a&the&21\\\hline
+Sue&Bob&20\\\hline
+the&a&18\\\hline
+was&had&17\\\hline
+for&.&17\\\hline
+her&the&17\\\hline
+had&was&17\\\hline
+the&her&17\\\hline
+his&the&16\\\hline
+a&his&15\\\hline
+.&!&15\\\hline
+.&for&14\\\hline
+.&,&14\\\hline
+\end{tabular}
+\caption{Top 20 Error Made by Forward-LSTM}
+\label{tab:lstm_top20}
+\end{table}
+
+
+\subsection{Sentence Embeddings and Story Generation}
+\textbf{a,b)}
+
+In this experiment, I use the cell state from encoder as the encoded value. The original sentence and top 10 nearest neighbor sentences generated by bi-directional LSTM and bag-of-word is demonstrated below. The code is in \texttt{s2s\_neighbor.py}.
+
+In bi-directional LSTM case, the most obvious similarity captured is the first several words. For example, for the original sentence "He said it was the most fun he 's had in a long time . ", top 10 neighbors are 
+
+He landed on his arm , and it broke under him .\\
+He pulled out a shopping list he made to check what to get .\\
+The new lady took him by the hand and walked towards the door .\\
+He came in and stole the only chair we had .\\
+He ran out of time before he had to eat with the family .\\
+His dad missed , and the baseball hit him right in the face .\\
+He could not leave the house for another week after he got out of bed .\\
+He opened the door and decided he didn 't need his coat .\\
+His mother told him that they must go to the doctor .\\
+Since it well on the side with the cheese , it was no longer good .\\
+
+and for "Bob spent hours working for money for the project . ", top 10 neighbors are 
+
+Bob was 8 and really wanted a pet . \\
+Bob was an older man with a large family . \\
+Bob was disappointed but kept waiting for the call . \\
+Bob decided to go to his grandmother 's house . \\
+Bob went to the store and bought a pool . \\
+Bob tried to talk to a girl at the bar . \\
+Bob was on a camping trip with his friends . \\
+Bob wanted to get a cat to keep him company . \\
+Bob was excited and nervous at the same time . \\
+Bob wanted to learn how to play the piano . \\
+
+In bag-of-word case, the similarity seems focus more on the entire content of the sentence. For example, with original sentence "Bob proposed to her at dinner . ", top 10 neighbors are 
+
+Bob proposed to her at dinner . \\
+Bob proposed to her that night at dinner . \\
+She wanted to get her mind of Bob from school . \\
+Sue wanted Bob to ask her on a date . \\
+Bob took Sue to her favorite restaurant . \\
+When Bob spoke to Sue in class she spoke back . \\
+Bob decided to make her dinner . \\
+Bob met her but was too nervous to say anything . \\
+During math class , Sue passed a note to Bob . \\
+Sue and Bob wanted to go to the movies . \\
+
+Here sentences starts "Bob", "Sue", and "Her" all have chance to be chosen, which enables higher possibility to find related sentences.
+
+\textbf{c)}
+
+I use bi-directional LSTM to generate next sentences. The code can be found in \texttt{s2s\_nextsentence.py}. The result is shown in \Cref{tab:gen}. It can be seen that all generated sentences are properly formatted (end with period) and are meaningful English sentences. Most of them have a close meaning to the query sentences.
+\begin{table}
+\begin{tabular}{l|l}
+\textbf{Original Sentence} & \textbf{Generated} \\
+\hline
+He was accepted ! &  Bob was very happy that he did not have to go alone . \\
+\hline
+Sue was the last one in the house . & She was nervous . \\
+\hline
+Then Bob caught up . & He was nervous . \\
+\hline
+His mom and dad told him that soon\\ he would be a big brother . & Bob was saved ! \\
+\hline
+Her dentist decided to pull the teeth \\to speed things up . &Sue was thrilled . \\
+\hline
+Sue knew she would be in trouble if \\ she woke him up .  & She told Sue that they would have to give the dog away . \\
+\hline
+He searched every store and no one \\carried fresh milk . & Bob was mad .\\
+\hline
+A past due notice arrived in the mail , \\but Bob ignored it . & Bob told his teacher the story . \\
+\hline
+It was a close race but Bob pulled \\ahead at the end . &The old job took Bob back happily . \\
+\hline
+She found some cute black ones . & Sue was thrilled . \\
+\end{tabular}
+\caption{Using forward-LSTM to generate story}
+\label{tab:gen}
+\end{table}
 
 \end{document}

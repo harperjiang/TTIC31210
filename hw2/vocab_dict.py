@@ -18,7 +18,7 @@ def get_dict():
 
 def translate(idx_dict, data):
     # Remove everything after end symbol
-    if 1 in data:
+    if isinstance(data,list) and 1 in data:
         del data[data.index(1)+1:]
 
     words = [idx_dict[i] for i in data]

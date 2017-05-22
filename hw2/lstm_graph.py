@@ -424,6 +424,65 @@ class BiLSTMEncodeGraph(Graph):
         # return np.concatenate((self.encoded_h.value, self.encoded_c.value), axis=1)
         return self.encoded_c.value
 
+class BiLSTMDecodeGraph(BiLSTMEncodeGraph):
+    def __init__(self, loss, dict_size, hidden_dim, predict_len):
+        super().__init__(loss, None, dict_size, hidden_dim)
+        self.predict_len = predict_len
+
+    def build_graph(self, batch):
+        enc_data = batch.data
+        self.reset()
+
+        bsize, enc_length = enc_data.shape
+
+        outputs = []
+
+        # Build Fwd Encode Graph
+        self.feh0.value = np.zeros([bsize, self.half_dim])
+        self.fec0.value = np.zeros([bsize, self.half_dim])
+
+        fh = self.feh0
+        fc = self.fec0
+        for idx in range(enc_length):
+            in_i = self.input()
+            in_i.value = enc_data[:, idx]  # Get value from batch
+            x = Embed(in_i, self.feembed)
+            fh, fc = self.fenc_lstm_cell(x, fh, fc)
+
+        # Build Bwd Encode Graph
+        self.beh0.value = np.zeros([bsize, self.half_dim])
+        self.bec0.value = np.zeros([bsize, self.half_dim])
+
+        bh = self.beh0
+        bc = self.bec0
+        for idx in range(enc_length):
+            in_i = self.input()
+            in_i.value = enc_data[:, enc_length - 1 - idx]  # Get value from batch
+            x = Embed(in_i, self.beembed)
+            bh, bc = self.benc_lstm_cell(x, bh, bc)
+
+        # Build Decode Graph
+        h = Concat(fh, bh)
+        c = Concat(fc, bc)
+
+        self.encoded_h = h
+        self.encoded_c = c
+
+        # Build Decode Graph
+
+        decode_in = self.input()
+        decode_in.value = np.zeros([bsize])
+        decode_embed = Embed(decode_in, self.dembed)
+        x = decode_embed
+        for idx in range(self.predict_len):
+            h, c = self.dec_lstm_cell(x, h, c)
+            out_i = ArgMax(SoftMax(Dot(h, self.dv2c)))
+            outputs.append(out_i)
+            x = Embed(out_i, self.dembed)
+        self.output(Collect(outputs))
+        self.expect(np.zeros([bsize, self.predict_len]))
+
+
 
 class BowEncodeGraph(LSTMGraph):
     def __init__(self, loss, update, dict_size, hidden_dim):

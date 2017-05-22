@@ -62,7 +62,7 @@ class Trainer(object):
                   "time %d secs, "
                   "train loss %.4f, "
                   "dev accuracy %.4f, "
-                  "test accuracy %.4f" % (i, time() - stime, total_loss, dev_acc, test_acc))
+                  "test accuracy %.4f" % (i, time() - stime, train_loss, dev_acc, test_acc))
 
             logfile.add_record(i, time() - origin_time, train_time, train_loss, train_acc, dev_loss, dev_acc, test_acc)
 
