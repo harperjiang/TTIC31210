@@ -3,7 +3,7 @@ import numpy as np
 from lm_loss import LogLoss, HingeLoss, HingeLossOutput
 from ndnn.graph import Graph
 from ndnn.init import Xavier, Zero
-from ndnn.node import Concat, Sigmoid, Add, Dot, Tanh, Mul, Collect, Embed, SoftMax, MDEmbed, Average
+from ndnn.node import Concat, Sigmoid, Add, Dot, Tanh, Mul, Collect, Embed, SoftMax, MDEmbed, Average, ArgMax
 
 
 class LSTMGraph(Graph):
@@ -204,6 +204,9 @@ class LSTMEncodeGraph(Graph):
             # out_i = SoftMax(Dot(h, graph.ev2c))
             # outputs.append(out_i)
 
+        self.encoded_h = h
+        self.encoded_c = c
+
         # Build Decode Graph
         for idx in range(dec_length - 1):
             in_i = self.input()
@@ -215,6 +218,55 @@ class LSTMEncodeGraph(Graph):
 
         self.output(Collect(outputs))
         self.expect(dec_data[:, 1:])
+
+    def encode_result(self):
+        # return np.concatenate((self.encoded_h.value, self.encoded_c.value), axis=1)
+        return self.encoded_c.value
+
+
+class LSTMDecodeGraph(LSTMEncodeGraph):
+    def __init__(self, loss, dict_size, hidden_dim, predict_len):
+        super().__init__(loss, None, dict_size, hidden_dim)
+        self.predict_len = predict_len
+
+    def build_graph(self, batch):
+        enc_data = batch.data
+        self.reset()
+
+        bsize, enc_length = enc_data.shape
+
+        outputs = []
+
+        # Build Encode Graph
+        self.h0.value = np.zeros([bsize, self.hidden_dim])
+        self.c0.value = np.zeros([bsize, self.hidden_dim])
+
+        h = self.h0
+        c = self.c0
+        for idx in range(enc_length):
+            in_i = self.input()
+            in_i.value = enc_data[:, idx]  # Get value from batch
+            x = Embed(in_i, self.eembed)
+            h, c = self.enc_lstm_cell(x, h, c)
+            # out_i = SoftMax(Dot(h, graph.ev2c))
+            # outputs.append(out_i)
+
+        self.encoded_h = h
+        self.encoded_c = c
+
+        # Build Decode Graph
+
+        decode_in = self.input()
+        decode_in.value = np.zeros([bsize])
+        decode_embed = Embed(decode_in, self.dembed)
+        x = decode_embed
+        for idx in range(self.predict_len):
+            h, c = self.dec_lstm_cell(x, h, c)
+            out_i = ArgMax(SoftMax(Dot(h, self.dv2c)))
+            outputs.append(out_i)
+            x = Embed(out_i, self.dembed)
+        self.output(Collect(outputs))
+        self.expect(np.zeros([bsize, self.predict_len]))
 
 
 class BiLSTMEncodeGraph(Graph):
@@ -353,6 +405,10 @@ class BiLSTMEncodeGraph(Graph):
         # Build Decode Graph
         h = Concat(fh, bh)
         c = Concat(fc, bc)
+
+        self.encoded_h = h
+        self.encoded_c = c
+
         for idx in range(dec_length - 1):
             in_i = self.input()
             in_i.value = dec_data[:, idx]
@@ -363,6 +419,10 @@ class BiLSTMEncodeGraph(Graph):
 
         self.output(Collect(outputs))
         self.expect(dec_data[:, 1:])
+
+    def encode_result(self):
+        # return np.concatenate((self.encoded_h.value, self.encoded_c.value), axis=1)
+        return self.encoded_c.value
 
 
 class BowEncodeGraph(LSTMGraph):
@@ -377,6 +437,8 @@ class BowEncodeGraph(LSTMGraph):
 
         emb = MDEmbed(h0c0, self.embed)
         avg = Average(emb)
+        self.encoded_h = avg
+        self.encoded_c = avg
         return avg, avg
 
     def build_graph(self, batch):
@@ -397,3 +459,7 @@ class BowEncodeGraph(LSTMGraph):
             outputs.append(out_i)
         self.output(Collect(outputs))
         self.expect(data[:, 1:])
+
+    def encode_result(self):
+        # return np.concatenate((self.encoded_h.value, self.encoded_c.value), axis=1)
+        return self.encoded_c.value

@@ -23,6 +23,8 @@ class Node(object):
             context = inputs[0].context
             context.attach_node(self)
             self.context = context
+        self.value = dt(0)
+        self.grad = dt(0)
 
     def forward(self):
         self.value = self.compute()
@@ -277,7 +279,7 @@ class ArgMax(Node):
         self.x = x
 
     def compute(self):
-        return np.argmax(self.x.value)
+        return np.argmax(self.x.value, axis=1)
 
     def backward(self):
         pass
