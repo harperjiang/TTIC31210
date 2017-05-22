@@ -2,9 +2,11 @@
 %%There is just one section and two subsections.
 \documentclass{article}
 
+\usepackage{iclr2016_conference,times}
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{parskip}
+\usepackage{subcaption}
 \usepackage{xcolor} 
 \usepackage{cleveref}
 \usepackage{tikz}
@@ -12,9 +14,6 @@
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 
-\setlength{\parskip}{0.3cm} 
-\setlength{\voffset}{-3cm}
-\setlength{\textheight}{9.5in}
 \title{TTIC 31210 Homework 2 \\ Spring 2017}
 
 \author{Hao Jiang}
@@ -104,7 +103,7 @@ These words appear at the same position of a sentence and is interchangable. Con
 Example: was - decided, was - had, was - didn, was - 's, was - went
 
 The subjunctive verbs ``was'', as the word with highest frequency in training set, is used by the model to replace other verbs that may appear at the same position.
-	\item \textbf{Period and Conjective words}.
+	\item \textbf{Period and Conjunctions}.
 
 Example: . - and 
 
@@ -122,50 +121,28 @@ The source code for implementing language model using log loss in in \texttt{lm\
 
 \subsection{Hinge Loss Experiments}
 
-\textbf{a)}
-In \Cref{fig:hinge_log}, we compare the result between log loss and hinge loss when NEG equals the entire vocabulary and use $emb = emb_i$. It can be seen that HingeLoss has a lower best test accuracy, and takes more epochs to converge to the best result (around 25 more epochs)
+\textbf{a,b)}
+In \Cref{fig:hinge_log}, we compare the test accuracy of Log Loss and Hinge Loss with different configurations. The first thing we can notice is that LogLoss have a much higher accuracy than any of the Hinge Loss variations and achieve the peak value fast.
+
+When NEG equals the entire vocabulary and use $emb = emb_i$. It can be seen that HingeLoss has a lower best test accuracy, and takes more epochs to converge to the best result (around 25 more epochs). When $emb \neq emb_i$, Hinge Loss is able to achieve a slightly higher test accuracy (31.42\% vs. 30.48\%) and takes less epochs to reach it (10 epochs faster).
 
 \begin{figure}
 \centering
 \begin{tikzpicture}
-\begin{axis}[xlabel={Epoch}, ylabel={Test Accuracy},legend entries={LogLoss, HingeLoss}]
+\begin{axis}[xlabel={Epoch}, ylabel={Test Accuracy},legend entries={LogLoss, HingeLoss - Reuse Embedding, Hinge Loss - New Embedding, HingeLoss - r = 100, Hinge Loss - r =10}, legend style={at = {(0,1)}, anchor=south west}]
 \addplot[mark = none, blue] table[x=epoch,y=test_acc,col sep=comma] {data/lm_logloss.log};
 \addplot[mark = none, red] table[x=epoch,y=test_acc,col sep=comma] {data/lm_hingeloss_sem.log};
+\addplot[mark = none, yellow] table[x=epoch,y=test_acc,col sep=comma] {data/lm_hingeloss_all.log};
+\addplot[mark = none, black] table[x=epoch,y=test_acc,col sep=comma] {data/lm_hingeloss_r100.log};
+\addplot[mark = none, green] table[x=epoch,y=test_acc,col sep=comma] {data/lm_hingeloss_r10.log};
 \end{axis}
 \end{tikzpicture}
 \caption{Test Accuracy - Hinge Loss vs. Log Loss}
 \label{fig:hinge_log}
 \end{figure}
 
-\textbf{b)}
-In \Cref{fig:hinge_2}, we show that when $emb \neq emb_i$, Hinge Loss is able to achieve a higher test accuracy (31.42\% vs. 30.48\%) and takes less epochs to reach it (10 epochs faster).
+\textbf{c)} \Cref{fig:hinge_log} also shows the experiments with different negative sample size (all vocabularies, e.g., 1498, 100 and 10). It can be seen that although a larger negative sample size brings higher accuracy, the difference is not that obvious. Specifically, using negative sample size 100 almost achieve same level of accuracy with the case when using all vocabulary as negative sample.
 
-\begin{figure}
-\centering
-\begin{tikzpicture}
-\begin{axis}[xlabel={Epoch}, ylabel={Test Accuracy},legend entries={Separate Embedding, Same Embedding}, legend style={at = {(0,1)}, anchor=south west}]
-\addplot[mark = none, blue] table[x=epoch,y=test_acc,col sep=comma] {data/lm_hingeloss_all.log};
-\addplot[mark = none, red] table[x=epoch,y=test_acc,col sep=comma] {data/lm_hingeloss_sem.log};
-\end{axis}
-\end{tikzpicture}
-\caption{Test Accuracy - Hinge Loss with Separated Embedding}
-\label{fig:hinge_2}
-\end{figure}
-
-\textbf{c)} \Cref{fig:hinge_3} shows the experiments with different negative sample size (all vocabularies, e.g., 1498, 100 and 10). It can be seen that although a larger negative sample size brings higher accuracy, the difference is not that much. Especially, using negative sample size 100 almost achieve same level of accuracy with the case when using all vocabulary as negative sample.
-
-\begin{figure}
-\centering
-\begin{tikzpicture}
-\begin{axis}[xlabel={Epoch}, ylabel={Test Accuracy},legend entries={All, 100, 10}, legend style={at = {(0,1)}, anchor=south west}]
-\addplot[mark = none, blue] table[x=epoch,y=test_acc,col sep=comma] {data/lm_hingeloss_all.log};
-\addplot[mark = none, red] table[x=epoch,y=test_acc,col sep=comma] {data/lm_hingeloss_r100.log};
-\addplot[mark = none, black] table[x=epoch,y=test_acc,col sep=comma] {data/lm_hingeloss_r10.log};
-\end{axis}
-\end{tikzpicture}
-\caption{Test Accuracy - Hinge Loss with different Negative Sample Size}
-\label{fig:hinge_3}
-\end{figure}
 
 \subsection{Loss Function Comparison and Analysis}
 \textbf{a)} \Cref{tab:sent_sec} shows the \#sents/sec values for the three losses. This number is computed using the following formula:
@@ -173,6 +150,7 @@ In \Cref{fig:hinge_2}, we show that when $emb \neq emb_i$, Hinge Loss is able to
 \frac{\text{size of training set}}{\text{average training time}}
 \]
 \begin{table}
+\centering
 \begin{tabular}{c|c|c|c}
 \textbf{Loss} & Log Loss & Hinge Loss - All Vocab & Hinge Loss - r = 10 \\
 \hline
@@ -182,25 +160,22 @@ In \Cref{fig:hinge_2}, we show that when $emb \neq emb_i$, Hinge Loss is able to
 \label{tab:sent_sec}
 \end{table}
 
-\textbf{b,c,d)} 
-
-\Cref{fig:ns_devacc} demonstrates how Dev accuracy varies with number of sentences processed and \Cref{fig:wc_devacc} shows how dev accuracy improves with wall clock time. From these figures, it can be observed that LogLoss takes both shorter wall clock time and less number of sentences to achieve its peak dev accuracy. In addition, a smaller negative sample in Hinge Loss has negative impact to both the training time needed and epochs needed to reach the peak dev accuracy.
 \begin{figure}
 \centering
-\begin{tikzpicture}
+\begin{subfigure}{0.46\textwidth}
+\begin{tikzpicture}[scale=0.7]
 \begin{axis}[xlabel={Number of Sentences}, ylabel={Dev Accuracy},legend entries={LogLoss, HingeLoss-All, HingeLoss-10}, legend style={at = {(0,1)}, anchor=south west}]
 \addplot[mark = none, blue] table[x expr={\thisrowno{0}*6036},y=dev_acc,col sep=comma] {data/lm_logloss.log};
 \addplot[mark = none, red] table[x expr={\thisrowno{0}*6036},y=dev_acc,col sep=comma] {data/lm_hingeloss_all.log};
 \addplot[mark = none, black] table[x expr={\thisrowno{0}*6036},y=dev_acc,col sep=comma] {data/lm_hingeloss_r10.log};
 \end{axis}
 \end{tikzpicture}
-\caption{Dev Accuracy with Number of Sentences Processed}
+\caption{Dev Accuracy with \# of Sent }
 \label{fig:ns_devacc}
-\end{figure}
-
-\begin{figure}
+\end{subfigure}
+\begin{subfigure}{0.46\textwidth}
 \centering
-\begin{tikzpicture}
+\begin{tikzpicture}[scale=0.7]
 \begin{axis}[xlabel={Wall Clock Time (sec)}, ylabel={Dev Accuracy},legend entries={LogLoss, HingeLoss-All, HingeLoss-10}, legend style={at = {(0,1)}, anchor=south west}]
 \addplot[mark = none, blue] table[x=wall_clock,y=dev_acc,col sep=comma] {data/lm_logloss.log};
 \addplot[mark = none, red] table[x=wall_clock,y=dev_acc,col sep=comma] {data/lm_hingeloss_all.log};
@@ -209,13 +184,14 @@ In \Cref{fig:hinge_2}, we show that when $emb \neq emb_i$, Hinge Loss is able to
 \end{tikzpicture}
 \caption{Dev Accuracy with Wall Clock Time}
 \label{fig:wc_devacc}
+\end{subfigure}
+\caption{How Dev Accuracy with different factors}
 \end{figure}
 
-\textbf{e)}
-The relationship between dev loss and dev accuracy in Log Loss is demonstrated in \Cref{fig:logloss_acc_loss}. It can be seen that when dev loss reaches its minimum, dev accuracy reaches it's maximum.
 \begin{figure}
 \centering
-\begin{tikzpicture}
+\begin{subfigure}{0.45\textwidth}
+\begin{tikzpicture}[scale=0.7]
 \begin{axis}[xlabel={Epoch}, ylabel={Data},legend entries={Dev Accuracy, Dev Loss}, legend style={at = {(0,1)}, anchor=south west}]
 \addplot[mark = none, blue] table[x=epoch,y=dev_acc,col sep=comma] {data/lm_logloss.log};
 \addplot[mark = none, red] table[x=epoch,y expr={\thisrowno{5}*10},col sep=comma] {data/lm_logloss.log};
@@ -223,13 +199,9 @@ The relationship between dev loss and dev accuracy in Log Loss is demonstrated i
 \end{tikzpicture}
 \caption{Log Loss - Dev Accuracy with Dev Loss}
 \label{fig:logloss_acc_loss}
-\end{figure}
-
-\textbf{f)}
-For Hinge Loss, the result is shown in \Cref{fig:hingeloss_acc_loss}. Different from the observation in Log Loss, now the dev accuracy occurs at totally different time point from the dev loss. The peak value of dev accuracy appears much slower than the minimum of dev loss.
-\begin{figure}
-\centering
-\begin{tikzpicture}
+\end{subfigure}
+\begin{subfigure}{0.45\textwidth}
+\begin{tikzpicture}[scale=0.7]
 \begin{axis}[xlabel={Epoch}, ylabel={Data},legend entries={Dev Accuracy, Dev Loss}, legend style={at = {(0,1)}, anchor=south west}]
 \addplot[mark = none, blue] table[x=epoch,y=dev_acc,col sep=comma] {data/lm_hingeloss_all.log};
 \addplot[mark = none, red] table[x=epoch,y expr={\thisrowno{5}/1000},col sep=comma] {data/lm_hingeloss_all.log};
@@ -237,12 +209,27 @@ For Hinge Loss, the result is shown in \Cref{fig:hingeloss_acc_loss}. Different 
 \end{tikzpicture}
 \caption{Hinge Loss - Dev Accuracy with Dev Loss}
 \label{fig:hingeloss_acc_loss}
+\end{subfigure}
+\caption{How Dev Loss and Dev Accuracy Varies in different Loss}
 \end{figure}
+
+\textbf{b,c,d)} 
+
+\Cref{fig:ns_devacc} demonstrates how Dev accuracy varies with number of sentences processed and \Cref{fig:wc_devacc} shows how dev accuracy improves with wall clock time. From these figures, it can be observed that LogLoss takes both shorter wall clock time and less number of sentences to achieve its peak dev accuracy. In addition, a smaller negative sample in Hinge Loss has negative impact to both the training time needed and epochs needed to reach the peak dev accuracy.
+
+
+\textbf{e)}
+The relationship between dev loss and dev accuracy in Log Loss is demonstrated in \Cref{fig:logloss_acc_loss}. It can be seen that when dev loss reaches its minimum, dev accuracy reaches it's maximum.
+
+
+\textbf{f)}
+For Hinge Loss, the result is shown in \Cref{fig:hingeloss_acc_loss}. Different from the observation in Log Loss, now the dev accuracy occurs at totally different time point from the dev loss. The peak value of dev accuracy appears much slower than the minimum of dev loss.
+
 
 \textbf{g, h)}
 From \Cref{fig:logloss_acc_loss} and \Cref{fig:hingeloss_acc_loss}, it can be seen that when training with Log Loss, after reaching the optimal point, training more epochs does not help improving the dev accuracy and reduce the loss. Instead, the dev accuracy begins to drop and dev loss begins to increase. The same thing happens to the case when using Hinge Loss. This is caused by the overfitting on training data.
 
-\textbf{i}
+\textbf{i)}
 If I have a very large training set, I will use Log Loss. Although Hinge Loss takes less time for each epoch, it takes more epochs and thus longer time to achieve its best result. On the contrast, Log Loss takes slightly longer time for each epoch, but use much less epochs to reach its optimum. Thus Log Loss should be a better choice.
 
 \section{Sequence-to-Sequence Models}
@@ -280,11 +267,11 @@ The following error categories can be observed.
 \item \textbf{Name and Pronoun} This category also appears in Log Loss error.
 \item \textbf{Was and other Verb} This category also appears in Log Loss error. However, here ``was'' is no longer dominating. There are cases ground truth is ``was'' but the model generates ``had".
 \item \textbf{Definite and Indefinite Article} This category also appears in Log Loss error.
-\item \textbf{Period, Conjective Word and Other Symbol} 
+\item \textbf{Period, Conjunctions, Preposition and Other Symbol} 
 
 Example: ``." - ``!" , ``." - ``,". ``.'' - for
 
-This is a new category. Exclamation mark and period is in most of the time interchangeable (some people use exclamation mark to replace all periods, especially on Internet) and is hard to distinguish. In addition, generating a period when comma and other conjective words are expected shows that the model tends to generate shorter sentence.
+This is a new category. In previous case we notice period is mistaken with conjunctions such as ``and". But here we have seen period mistaken with exclamation marks, commas, and other prepositions such as ``for'' and ``to''. Exclamation mark and period is in most of the time interchangeable (some people use exclamation mark to replace all periods, especially on Internet) and is hard to distinguish. In addition, generating a period when comma and other conjective words are expected shows that the model tends to generate shorter sentence.
 
 \end{enumerate}
 
