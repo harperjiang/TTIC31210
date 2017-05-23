@@ -488,7 +488,6 @@ class BiLSTMDecodeGraph(BiLSTMEncodeGraph):
 class AttentionGraph(BiLSTMEncodeGraph):
     def __init__(self, loss, update, dict_size, hidden_dim):
         super().__init__(loss, update, dict_size, hidden_dim)
-        self.att_weight = self.param_of([hidden_dim, hidden_dim])
 
     def build_graph(self, batch):
         enc_data = batch.data[0]
@@ -555,6 +554,74 @@ class AttentionGraph(BiLSTMEncodeGraph):
         self.output(Collect(outputs))
         self.expect(dec_data[:, 1:])
 
+
+class AttentionDecodeGraph(BiLSTMEncodeGraph):
+    def __init__(self, loss, update, dict_size, hidden_dim,predict_len):
+        super().__init__(loss, update, dict_size, hidden_dim)
+        self.predict_len = predict_len
+
+    def build_graph(self, batch):
+        enc_data = batch.data
+        self.reset()
+
+        bsize, enc_length = enc_data.shape
+
+        outputs = []
+
+        fwd_encode_result = [None] * enc_length
+        bwd_encode_result = [None] * enc_length
+
+        # Build Fwd Encode Graph
+        self.feh0.value = np.zeros([bsize, self.half_dim])
+        self.fec0.value = np.zeros([bsize, self.half_dim])
+
+        fh = self.feh0
+        fc = self.fec0
+        for idx in range(enc_length):
+            in_i = self.input()
+            in_i.value = enc_data[:, idx]  # Get value from batch
+            x = Embed(in_i, self.feembed)
+            fh, fc = self.fenc_lstm_cell(x, fh, fc)
+            fwd_encode_result[idx] = fh
+
+        # Build Bwd Encode Graph
+        self.beh0.value = np.zeros([bsize, self.half_dim])
+        self.bec0.value = np.zeros([bsize, self.half_dim])
+
+        bh = self.beh0
+        bc = self.bec0
+        for idx in range(enc_length):
+            in_i = self.input()
+            in_i.value = enc_data[:, enc_length - 1 - idx]  # Get value from batch
+            x = Embed(in_i, self.beembed)
+            bh, bc = self.benc_lstm_cell(x, bh, bc)
+            bwd_encode_result[enc_length - 1 - idx] = bh
+
+        # Build Decode Graph
+        h = Concat(fh, bh)
+        # c = Concat(fc, bc)
+
+        self.encoded_h = h
+        # self.encoded_c = c
+
+        encode_result = []
+        for idx in range(enc_length):
+            encode_result.append(Concat(fwd_encode_result[idx], bwd_encode_result[idx]))
+        encode_state = Collect(encode_result)
+
+        init = self.input()
+        init.value = np.zeros([bsize,1])
+        x = Embed(init,self.dembed)
+        for idx in range(self.predict_len):
+
+            c = Attention(encode_state, h)
+
+            h, c = self.dec_lstm_cell(x, h, c)
+            out_i = ArgMax(SoftMax(Dot(h, self.dv2c)))
+            outputs.append(out_i)
+            x = Embed(out_i, self.dembed)
+        self.output(Collect(outputs))
+        self.expect(np.zeros([bsize, self.predict_len]))
 
 class BowEncodeGraph(LSTMGraph):
     def __init__(self, loss, update, dict_size, hidden_dim):

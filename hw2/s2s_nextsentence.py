@@ -2,7 +2,7 @@ import numpy as np
 
 from lm_loss import LogLoss
 from lstm_dataset import S2SDataSet
-from lstm_graph import BiLSTMDecodeGraph
+from lstm_graph import BiLSTMDecodeGraph,AttentionDecodeGraph
 from ndnn.dataset import Batch
 from ndnn.store import ParamStore
 from vocab_dict import get_dict, translate
@@ -15,8 +15,10 @@ dict_size = len(vocab_dict)
 hidden_dim = 200
 batch_size = 50
 
-graph = BiLSTMDecodeGraph(LogLoss(), dict_size, hidden_dim, 50)
-store = ParamStore("model/s2s_bilstm.mdl")
+#graph = BiLSTMDecodeGraph(LogLoss(), dict_size, hidden_dim, 50)
+graph = AttentionDecodeGraph(LogLoss(),dict_size,hidden_dim,50)
+#store = ParamStore("model/s2s_bilstm.mdl")
+store = ParamStore("s2s_attention.mdl")
 graph.load(store.load())
 
 num_sample = 10
