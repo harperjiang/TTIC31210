@@ -1,0 +1,66 @@
+%%This is a very basic article template.
+%%There is just one section and two subsections.
+\documentclass{article}
+
+\usepackage{iclr2016_conference,times}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{parskip}
+\usepackage{subcaption}
+\usepackage{xcolor} 
+\usepackage{cleveref}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+\title{TTIC 31210 Homework 3 \\ Spring 2017}
+
+\author{Hao Jiang}
+\begin{document}
+
+\maketitle
+\section{Tasks}
+\subsection{Understanding HMMs}
+If the HMM does not include the generation of the EOS label, the model described in the question
+will no longer be describing the probability of a single sequence of length $T$, but the probability
+of all sequences of length $>= T$, which begins with symbol $x_{1:T}$ and tagged with $y_{1:T}$
+
+\subsection{Supervised Learning for HMMs:Implementation}
+
+The implementation is in \texttt{hmm.py}. The top 10 words for ADJ and their probability are listed 
+in \Cref{tab:top10adj} and top 5 tag following PROPN are listed in \Cref{tab:top5propn}
+\begin{table}
+\centering
+\begin{tabular}{c|c}
+other & 0.001310 \\\hline
+good & 0.001227 \\\hline
+new & 0.000953 \\\hline
+more & 0.000806 \\\hline
+great & 0.000777 \\\hline
+many & 0.000777 \\\hline
+best & 0.000655 \\\hline
+same & 0.000645 \\\hline
+sure & 0.000542 \\\hline
+last & 0.000523 \\
+\end{tabular}
+\caption{Top 10 Words for ADJ}
+\label{tab:top10adj}
+\end{table}
+\renewcommand{\arraystretch}{1.5}
+\begin{table}
+\centering
+\begin{tabular}{c|c}
+PROPN & 0.017963\\\hline
+PUNCT & 0.016391\\\hline
+NOUN & 0.005170\\\hline
+ADP & 0.004191\\\hline
+VERB & 0.004186\\\hline
+\end{tabular}
+\caption{TOp 5 tags following PROPN}
+\label{tab:top5propn}
+\end{table}
+
+\subsection{Gibbs Sampling for Decoding}
+
+\end{document}
