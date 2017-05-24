@@ -1,30 +1,4 @@
-from dataset import UDDataSet
-
-train_ds = UDDataSet('data/en-ud-train.conllu')
-dev_ds = UDDataSet('data/en-ud-dev.conllu')
-
-# Train HMM by doing counting
-
-emission_counter = {}
-transition_counter = {}
-
-for sent in train_ds.sentences():
-    prev_word = None
-    for word in sent.words():
-        emit_key = (word[1], word[0])
-        if emit_key not in emission_counter:
-            emission_counter[emit_key] = 0
-        emission_counter[emit_key] += 1
-        if prev_word is not None:
-            transit_key = (prev_word[1], word[1])
-            if transit_key not in transition_counter:
-                transition_counter[transit_key] = 0
-            transition_counter[transit_key] += 1
-        prev_word = word
-
-# Smoothing
-for pos in train_ds.pos:
-    emission_counter[(pos, "<UNK>")] = 1
+from dataset import UNK, BOS, EOS
 
 
 # Normalize
@@ -34,14 +8,44 @@ def normalize(counter):
         counter[key] /= sum_val
 
 
-normalize(emission_counter)
-normalize(transition_counter)
+class HMM:
+    def __init__(self):
+        self.emission_counter = {}
+        self.transition_counter = {}
+        self.num_state = 0
+        self.dataset = None
 
-adj_words = sorted([(key[1], emission_counter[key]) for key in emission_counter if key[0] == 'ADJ'], key=lambda x: x[1],
-                   reverse=True)[:10]
-print("\n".join(["%s & %.6f \\\\\\hline" % (w[0], w[1]) for w in adj_words]))
+    def train(self, train_ds):
+        self.dataset = train_ds
+        # Train HMM by doing counting
 
-transit = sorted([(key[1], transition_counter[key]) for key in transition_counter if key[0] == 'PROPN'],
-                 key=lambda x: x[1], reverse=True)[:5]
+        self.emission_counter.clear()
+        self.transition_counter.clear()
 
-print("\n".join(["%s & %.6f\\\\\\hline" % (t[0], t[1]) for t in transit]))
+        for sent in self.dataset.sentences():
+            bos_idx = self.dataset.lookup_pos(BOS)
+            eos_idx = self.dataset.lookup_pos(EOS)
+            prev_word = (-1, bos_idx)
+            for word in (sent.words() + [(-1, eos_idx)]):
+                emit_key = (word[1], word[0])
+                if emit_key not in self.emission_counter:
+                    self.emission_counter[emit_key] = 0
+                self.emission_counter[emit_key] += 1
+                if prev_word is not None:
+                    transit_key = (prev_word[1], word[1])
+                    if transit_key not in self.transition_counter:
+                        self.transition_counter[transit_key] = 0
+                    self.transition_counter[transit_key] += 1
+                prev_word = word
+
+        # Smoothing
+        unk_idx = self.dataset.lookup_word(UNK)
+        for pos in self.dataset.idxpos:
+            self.emission_counter[(pos, unk_idx)] = 1
+
+        normalize(self.emission_counter)
+        normalize(self.transition_counter)
+        self.num_state = len(train_ds.pos)
+
+    def cond_prob(self, xt, ytm1, ytp1):
+        pass
