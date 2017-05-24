@@ -383,5 +383,28 @@ She found some cute black ones . & Sue was thrilled . \\
 \label{tab:gen}
 \end{table}
 \subsection{Extra Credit}
-For extra credit, I implement attention based on bi-directional LSTM and use it to perform both next word prediction and story generation. 
+For extra credit, I implement attention based on bi-directional LSTM and use it to perform both next word prediction and story generation. The code can be seen in \texttt{s2s\_attention.py}
+
+My implementation follows the structure described in \cite{nmt}, that is, the decoder's current state at step $t, c^{(d)}_t$ is computed as a weighted sum of encoder's hidden states $h^{(e)}_i$, where the weight $\alpha_{ti}$ for $h^{(e)}_i$ is the softmax of dot product of $h^{(e)}_i$ and decoder's previous hidden state $h^{(d)}_{t-1}$.
+
+\Cref{fig:attention} shows the experiment result. Unfortunately, although it takes longer time to train, the best test accuracy (34.16\%)  is slightly worse than bi-directional LSTM without attention (34.85\%).  
+
+When the attention model is used to generate sentences, we did see some new longer sentences such as ``Bob decided to go to the store to get to work . " and ``The dog would not go away , but laid down on Sue 's mother 's ' feet . '' But in general, no obvious improvement has been observed from adding attention to the model.
+
+\begin{figure}
+\centering
+\begin{tikzpicture}
+\begin{axis}[xlabel={Epoch}, ylabel={Accuracy},legend entries={Train, Dev, Test}]
+\addplot[mark = none, blue] table[x=epoch,y=train_acc,col sep=comma] {data/s2s_attention.log};
+\addplot[mark = none, red] table[x=epoch,y=dev_acc,col sep=comma] {data/s2s_attention.log};
+\addplot[mark = none, black] table[x=epoch,y=test_acc,col sep=comma] {data/s2s_attention.log};
+\end{axis}
+\end{tikzpicture}
+\caption{Bi-directional LSTM with Attention}
+\label{fig:attention}
+\end{figure}
+
+\bibliographystyle{plain}
+\bibliography{ref}
+
 \end{document}

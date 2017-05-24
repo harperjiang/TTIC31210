@@ -556,8 +556,8 @@ class AttentionGraph(BiLSTMEncodeGraph):
 
 
 class AttentionDecodeGraph(BiLSTMEncodeGraph):
-    def __init__(self, loss, update, dict_size, hidden_dim,predict_len):
-        super().__init__(loss, update, dict_size, hidden_dim)
+    def __init__(self, loss, dict_size, hidden_dim, predict_len):
+        super().__init__(loss, None, dict_size, hidden_dim)
         self.predict_len = predict_len
 
     def build_graph(self, batch):
@@ -610,10 +610,9 @@ class AttentionDecodeGraph(BiLSTMEncodeGraph):
         encode_state = Collect(encode_result)
 
         init = self.input()
-        init.value = np.zeros([bsize,1])
-        x = Embed(init,self.dembed)
+        init.value = np.zeros([bsize])
+        x = Embed(init, self.dembed)
         for idx in range(self.predict_len):
-
             c = Attention(encode_state, h)
 
             h, c = self.dec_lstm_cell(x, h, c)
@@ -622,6 +621,7 @@ class AttentionDecodeGraph(BiLSTMEncodeGraph):
             x = Embed(out_i, self.dembed)
         self.output(Collect(outputs))
         self.expect(np.zeros([bsize, self.predict_len]))
+
 
 class BowEncodeGraph(LSTMGraph):
     def __init__(self, loss, update, dict_size, hidden_dim):

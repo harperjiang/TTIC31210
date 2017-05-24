@@ -18,7 +18,7 @@ batch_size = 50
 #graph = BiLSTMDecodeGraph(LogLoss(), dict_size, hidden_dim, 50)
 graph = AttentionDecodeGraph(LogLoss(),dict_size,hidden_dim,50)
 #store = ParamStore("model/s2s_bilstm.mdl")
-store = ParamStore("s2s_attention.mdl")
+store = ParamStore("model/s2s_attention.mdl")
 graph.load(store.load())
 
 num_sample = 10

@@ -13,7 +13,8 @@
 \usepackage{pgfplots}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
-
+\usepackage{graphicx}
+\newcommand{\indep}{\rotatebox[origin=c]{90}{$\models$}}
 \title{TTIC 31210 Homework 3 \\ Spring 2017}
 
 \author{Hao Jiang}
@@ -57,13 +58,35 @@ NOUN & 0.005170\\\hline
 ADP & 0.004191\\\hline
 VERB & 0.004186\\\hline
 \end{tabular}
-\caption{TOp 5 tags following PROPN}
+\caption{Top 5 tags following PROPN}
 \label{tab:top5propn}
 \end{table}
 
 \subsection{Gibbs Sampling for Decoding}
 \textbf{a)}
+
+In a HMM model we have the following properties:
 \begin{align*}
-&p(Y_t = y_t|Y_{-t} = y_{-t}, X_{1:T} = x_{1:T}) \\&= p(Y_t = y_t|Y_{t-1}=y_{t-1})p(X_t = x_t | Y_t = y_t)p(Y_{t+1} = y_{t+1}|Y_t = y_t)
+&Y_t \indep Y_{1:t-2} | Y_{t-1}\\
+&Y_t \indep Y_{t+2:T}| Y_{t+1}\\
+&Y_t \indep X_i | Y_i (i \neq t)
 \end{align*}
+Thus
+\begin{align*}
+&p(Y_t = y_t|Y_{-t} = y_{-t}, X_{1:T} = x_{1:T}) \\
+&= p(Y_t = y_t|Y_{t-1}=y_{t-1},Y_{t+1} = y_{t+1}, X_{t}=x_{t})\\
+&\propto p(Y_t = y_t, Y_{t+1} = y_{t+1}, X_t = x_t | Y_{t-1} = y_{t-1})\\
+&= p(Y_{t+1} = y_{t+1}, X_t = x_t | Y_t = y_t, Y_{t-1} = y_{t-1})p(Y_t = y_t|Y_{t-1} = y_{t-1}) \\
+&=p(Y_{t+1}=y_{t+1}|Y_t = y_t, Y_{t-1} = y_{t-1})p(X_{t}=x_{t}|Y_t = y_t, Y_{t-1} = y_{t-1})p(Y_t = y_t|Y_{t-1} = y_{t-1})\\
+&=p(Y_{t+1}=y_{t+1}|Y_t = y_t)p(X_{t}=x_{t}|Y_t = y_t)p(Y_t = y_t|Y_{t-1} = y_{t-1})\\
+\Box
+\end{align*}
+\textbf{b)}
+
+\begin{align*}
+&p(Y_1 = y_1 |Y_{-1}=y_{-1}, X_{1:T} = x_{1:T}) \propto p(Y_2 = y_2|Y_1 = y_1)p(X_1 = x_1|Y_1 = y_1)\\
+&p(Y_T = y_T|Y_{-T}=y_{-T},X_{1:T} = x_{1:T}) \propto p(X_T = x_T|Y_T = y_T)p(Y_T = y_T|Y_{T-1} = y_{T-1})
+\end{align*}
+
+\textbf{c)}
 \end{document}
