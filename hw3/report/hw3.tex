@@ -62,5 +62,8 @@ VERB & 0.004186\\\hline
 \end{table}
 
 \subsection{Gibbs Sampling for Decoding}
-
+\textbf{a)}
+\begin{align*}
+&p(Y_t = y_t|Y_{-t} = y_{-t}, X_{1:T} = x_{1:T}) \\&= p(Y_t = y_t|Y_{t-1}=y_{t-1})p(X_t = x_t | Y_t = y_t)p(Y_{t+1} = y_{t+1}|Y_t = y_t)
+\end{align*}
 \end{document}
