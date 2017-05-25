@@ -41,7 +41,7 @@ class Gibbs:
                 state[sidx] = self.pick(prob_dist, probe)
             # Update Beta
             if self.beta_schedule is not None:
-                self.beta = self.beta_schedule.update
+                self.beta = self.beta_schedule.update()
 
         return state
 
