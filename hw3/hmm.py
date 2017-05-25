@@ -36,7 +36,7 @@ class HMM:
 
         # Smoothing
         unk_idx = self.dataset.lookup_word(UNK)
-        for pos in self.dataset.idxpos:
+        for pos in range(self.num_state):
             self.emission_counter[(pos, unk_idx)] = 1
 
         self.normalize(self.emission_counter)

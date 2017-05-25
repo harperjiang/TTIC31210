@@ -14,6 +14,9 @@ class HMMTest(unittest.TestCase):
         self.assertEqual(17, hmm.bos_idx)
         self.assertEqual(18, hmm.eos_idx)
 
+        for i in range(hmm.num_state):
+            self.assertAlmostEqual(-12.228919653600784, hmm.emission_counter[(i, -1)])
+
     def test_cond_prop(self):
         hmm = HMM(UDDataSet("data/en-ud-train.conllu"))
 
@@ -35,8 +38,7 @@ class HMMTest(unittest.TestCase):
         counter['d'] = 4
         hmm.normalize(counter)
 
-        self.assertEqual(np.log(0.1),counter['a'])
-        self.assertEqual(np.log(0.2),counter['b'])
-        self.assertEqual(np.log(0.3),counter['c'])
-        self.assertEqual(np.log(0.4),counter['d'])
-
+        self.assertEqual(np.log(0.1), counter['a'])
+        self.assertEqual(np.log(0.2), counter['b'])
+        self.assertEqual(np.log(0.3), counter['c'])
+        self.assertEqual(np.log(0.4), counter['d'])
