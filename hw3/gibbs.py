@@ -1,5 +1,5 @@
 import numpy as np
-
+import math
 
 class Gibbs:
     def __init__(self, hmm):
@@ -26,6 +26,9 @@ class Gibbs:
                     ytm1 = state[sidx - 1]
                 # HMM.cond_prob returns a conditional probability
                 prob_dist = self.hmm.cond_prob(xt, ytm1, ytp1)
+                # Debug for nan
+                if math.isnan(prob_dist[0]):
+                    raise Exception("%d,%d,%d" % (xt, ytm1, ytp1))
                 # Sample from the prob
                 probe = np.log(np.random.rand())
                 state[sidx] = self.pick(prob_dist, probe)
@@ -38,6 +41,4 @@ class Gibbs:
             cum_sum = np.logaddexp(cum_sum, dist[i])
             if cum_sum >= probe:
                 return i
-        print(dist)
-        print(probe)
         raise Exception()

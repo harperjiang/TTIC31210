@@ -39,6 +39,11 @@ class HMM:
         for pos in range(self.num_state):
             self.emission_counter[(pos, unk_idx)] = 1
 
+        for i in range(self.num_state):
+            for j in range(self.num_state):
+                if (i, j) not in self.transition_counter:
+                    self.transition_counter[(i, j)] = 1
+
         self.normalize(self.emission_counter)
         self.normalize(self.transition_counter)
 

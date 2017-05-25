@@ -12,5 +12,5 @@ class GibbsTest(unittest.TestCase):
 
         gibbs = Gibbs(HMM(train_ds))
 
-        sample = gibbs.sample(dev_ds.sentences()[123], 10)
+        sample = gibbs.sample(dev_ds.sentences()[50], 10)
         print([train_ds.idx2pos(i) for i in sample])

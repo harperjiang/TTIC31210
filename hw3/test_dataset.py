@@ -13,3 +13,8 @@ class UDDataSetTest(unittest.TestCase):
         self.assertEqual(train_ds.words, test_ds.words)
 
         self.assertEqual(6, train_ds.lookup_pos("ADP"))
+
+    def test_find_word(self):
+        train_ds = UDDataSet('data/en-ud-train.conllu')
+        print(train_ds.idx2word(121))
+        print(train_ds.lookup_pos("PART"))

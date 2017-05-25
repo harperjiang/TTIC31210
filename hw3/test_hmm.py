@@ -42,3 +42,9 @@ class HMMTest(unittest.TestCase):
         self.assertEqual(np.log(0.2), counter['b'])
         self.assertEqual(np.log(0.3), counter['c'])
         self.assertEqual(np.log(0.4), counter['d'])
+
+    def test_error_cond_prop(self):
+        hmm = HMM(UDDataSet("data/en-ud-train.conllu"))
+
+        cprob = hmm.cond_prob(121, 4, 16)
+        self.assertAlmostEqual(1.00, sum([np.exp(i) for i in cprob]))
