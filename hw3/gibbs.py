@@ -7,8 +7,12 @@ class Gibbs:
     def __init__(self, hmm):
         self.hmm = hmm
         self.beta = 1
+        self.beta_schedule = None
 
     def sample(self, sentence, iteration):
+        if self.beta_schedule is not None:
+            self.beta_schedule.reset()
+
         num_state = self.hmm.num_state
         sent_len = len(sentence)
         state = np.random.randint(0, num_state, size=sent_len)
@@ -35,6 +39,10 @@ class Gibbs:
                 # Sample from the prob
                 probe = np.log(np.random.rand())
                 state[sidx] = self.pick(prob_dist, probe)
+            # Update Beta
+            if self.beta_schedule is not None:
+                self.beta = self.beta_schedule.update
+
         return state
 
     @staticmethod
@@ -46,9 +54,14 @@ class Gibbs:
                 return i
         raise Exception()
 
-class AnnealingSchedule:
-    def __init__(self):
-        pass
 
-    def update(self, beta):
-        pass
+class BetaSchedule:
+    def __init__(self):
+        self.beta = 0.1
+
+    def reset(self):
+        self.beta = 0.1
+
+    def update(self):
+        self.beta += 0.1
+        return self.beta

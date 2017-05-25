@@ -1,7 +1,7 @@
 import numpy as np
 
 from dataset import UDDataSet
-from gibbs import Gibbs
+from gibbs import Gibbs, BetaSchedule
 from hmm import HMM
 
 train_ds = UDDataSet('data/en-ud-train.conllu')
@@ -26,6 +26,8 @@ def predict(iteration):
 
 
 k = [1, 2, 5, 10, 100, 500, 1000, 2000]
+
+gibbs.beta_schedule = BetaSchedule()
 
 for ite in k:
     print("%d & %.4f\\\\\\hline" % (ite, predict(ite)))

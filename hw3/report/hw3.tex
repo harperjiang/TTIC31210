@@ -105,6 +105,8 @@ can only transit to 16 tags as next state), and I smooth the missing transition 
 5 & 0.8430\\\hline
 10 & 0.8448\\\hline
 100 & 0.8468\\\hline
+500 & 0.8428\\\hline
+
 \end{tabular}
 \caption{Gibbs Accuracy for different $k$ value}
 \label{tab:gibbs}
@@ -117,7 +119,12 @@ The result is shown in \Cref{tab:gibbsbeta}
 \begin{table}
 \centering
 \begin{tabular}{c|c|c}
-\textbf{$k$} & \textbf{$\beta = 0.5$} & \textbf{$\beta=2.5$} \\
+\textbf{$k$} & \textbf{$\beta = 0.5$} & \textbf{$\beta=2.5$} \\\hline
+1 & 0.7546 & 0.8031 \\\hline
+2 & 0.8047 & 0.8527\\\hline
+5 & 0.8044 & 0.8555 \\\hline
+10 & 0.8049 & 0.8582 \\\hline
+100 & 0.8069 & 0.8591 \\\hline
 \end{tabular}
 \caption{Gibbs Accuracy for different $\beta$}
 \label{tab:gibbsbeta}
