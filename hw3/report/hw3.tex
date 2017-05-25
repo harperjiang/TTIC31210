@@ -84,8 +84,8 @@ Thus
 \textbf{b)}
 
 \begin{align*}
-&p(Y_1 = y_1 |Y_{-1}=y_{-1}, X_{1:T} = x_{1:T}) \propto p(Y_2 = y_2|Y_1 = y_1)p(X_1 = x_1|Y_1 = y_1)\\
-&p(Y_T = y_T|Y_{-T}=y_{-T},X_{1:T} = x_{1:T}) \propto p(X_T = x_T|Y_T = y_T)p(Y_T = y_T|Y_{T-1} = y_{T-1})
+&p(Y_1 = y_1 |Y_{-1}=y_{-1}, X_{1:T} = x_{1:T}) \propto p(Y_2 = y_2|Y_1 = y_1)p(X_1 = x_1|Y_1 = y_1)p(Y_1 = y_1)\\
+&p(Y_T = y_T|Y_{-T}=y_{-T},X_{1:T} = x_{1:T}) \propto p(X_T = x_T|Y_T = y_T)p(Y_T = y_T|Y_{T-1} = y_{T-1})p(\langle EOS\rangle|Y_T = y_T)
 \end{align*}
 
 \textbf{c)}
