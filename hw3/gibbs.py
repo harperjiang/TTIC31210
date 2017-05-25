@@ -65,3 +65,18 @@ class BetaSchedule:
     def update(self):
         self.beta += 0.1
         return self.beta
+
+
+class BetaSqSchedule:
+    def __init__(self):
+        self.beta = 0.1
+        self.counter = 0
+
+    def reset(self):
+        self.beta = 0.1
+        self.counter = 0
+
+    def update(self):
+        self.counter += 1
+        self.beta = 0.1 + 0.05 * self.counter * self.counter
+        return self.beta

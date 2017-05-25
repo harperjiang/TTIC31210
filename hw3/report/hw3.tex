@@ -105,7 +105,7 @@ can only transit to 16 tags as next state), and I smooth the missing transition 
 5 & 0.8430\\\hline
 10 & 0.8448\\\hline
 100 & 0.8468\\\hline
-500 & 0.8428\\\hline
+500 & 0.8450\\\hline
 
 \end{tabular}
 \caption{Gibbs Accuracy for different $k$ value}
@@ -124,8 +124,17 @@ The implementation is in \texttt{gibbs\_run\_beta.py} and the result is shown in
 5 & 0.8044 & 0.8555 \\\hline
 10 & 0.8049 & 0.8582 \\\hline
 100 & 0.8069 & 0.8591 \\\hline
+500 & 0.8048 & 0.8600 \\\hline
 \end{tabular}
 \caption{Gibbs Accuracy for different $\beta$}
 \label{tab:gibbsbeta}
 \end{table}
+
+\textbf{f)}
+The implementation is in \texttt{gibbs\_run\_annealing.py} and the result is shown in \Cref{tab:gibbsanneal} for 
+$\beta = 0.1 + 0.1k_i$, where $k_i$ is the number of iterations.
+
+I also tried another schedule that set $\beta = $
+
+\subsection{Extra Credit: Gibbs Sampling for Minimum Bayes risk Decoding}
 \end{document}
