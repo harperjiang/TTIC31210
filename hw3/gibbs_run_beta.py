@@ -26,6 +26,8 @@ def predict(iteration):
 
 
 k = [1, 2, 5, 10, 100, 500, 1000, 2000]
+gibbs.beta = 0.5
 
 for ite in k:
     print("%d & %.4f\\\\\\hline" % (ite, predict(ite)))
+

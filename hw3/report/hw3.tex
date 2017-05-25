@@ -89,4 +89,37 @@ Thus
 \end{align*}
 
 \textbf{c)}
+
+The implementation of Gibbs sampling is in \texttt{gibbs\_run.py}. Although the homework mentioned there's no need
+to smooth the transition probability, I notice there are some transitions that is missing in the training set (e.g., PART 
+can only transit to 16 tags as next state), and I smooth the missing transition by setting 1 as the count.
+
+\textbf{d)}
+\Cref{tab:gibbs} shows the prediction accuracy for different $k$ values
+\begin{table}
+\centering
+\begin{tabular}{c|c}
+\textbf{$k$}&\textbf{Accuracy}\\\hline
+1 & 0.7900\\\hline
+2 & 0.8393\\\hline
+5 & 0.8430\\\hline
+10 & 0.8448\\\hline
+100 & 0.8468\\\hline
+\end{tabular}
+\caption{Gibbs Accuracy for different $k$ value}
+\label{tab:gibbs}
+\end{table}
+
+\textbf{e)}
+
+The result is shown in \Cref{tab:gibbsbeta}
+
+\begin{table}
+\centering
+\begin{tabular}{c|c|c}
+\textbf{$k$} & \textbf{$\beta = 0.5$} & \textbf{$\beta=2.5$} \\
+\end{tabular}
+\caption{Gibbs Accuracy for different $\beta$}
+\label{tab:gibbsbeta}
+\end{table}
 \end{document}

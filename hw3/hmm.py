@@ -49,7 +49,7 @@ class HMM:
 
     # Compute the conditional probability p(y_t | others)
     # using p(y_t | y_{t-1}) p(x_t | y_t) p(y_{t+1}|y_t)
-    def cond_prob(self, xt, ytm1, ytp1):
+    def cond_prob(self, xt, ytm1, ytp1, beta=1):
         if ytm1 is None:
             ytm1 = self.bos_idx
         if ytp1 is None:
@@ -61,7 +61,8 @@ class HMM:
             xtyt = self.emission_counter.get((i, xt), -np.inf)
             ytp1yt = self.transition_counter.get((i, ytp1), -np.inf)
             result[i] = ytytm1 + xtyt + ytp1yt
-
+        # Raise to the power of beta
+        result *= beta
         # Normalize log value
         cum_sum = -np.inf
         for i in result:
