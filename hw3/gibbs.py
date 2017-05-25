@@ -8,10 +8,12 @@ class Gibbs:
         self.hmm = hmm
         self.beta = 1
         self.beta_schedule = None
+        self.states = []
 
     def sample(self, sentence, iteration):
         if self.beta_schedule is not None:
             self.beta_schedule.reset()
+        del self.states[:]
 
         num_state = self.hmm.num_state
         sent_len = len(sentence)
@@ -39,6 +41,7 @@ class Gibbs:
                 # Sample from the prob
                 probe = np.log(np.random.rand())
                 state[sidx] = self.pick(prob_dist, probe)
+            self.states.append(state)
             # Update Beta
             if self.beta_schedule is not None:
                 self.beta = self.beta_schedule.update()

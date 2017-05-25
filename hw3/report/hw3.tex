@@ -15,6 +15,7 @@
 \usepackage{algpseudocode}
 \usepackage{graphicx}
 \newcommand{\indep}{\rotatebox[origin=c]{90}{$\models$}}
+\DeclareMathOperator*{\argmin}{argmin}
 \title{TTIC 31210 Homework 3 \\ Spring 2017}
 
 \author{Hao Jiang}
@@ -106,7 +107,8 @@ can only transit to 16 tags as next state), and I smooth the missing transition 
 10 & 0.8448\\\hline
 100 & 0.8468\\\hline
 500 & 0.8450\\\hline
-
+1000 & 0.8447\\\hline
+2000 & 0.8477 \\
 \end{tabular}
 \caption{Gibbs Accuracy for different $k$ value}
 \label{tab:gibbs}
@@ -125,16 +127,71 @@ The implementation is in \texttt{gibbs\_run\_beta.py} and the result is shown in
 10 & 0.8049 & 0.8582 \\\hline
 100 & 0.8069 & 0.8591 \\\hline
 500 & 0.8048 & 0.8600 \\\hline
+1000 & 0.8025 & 0.8586\\\hline
+2000 & 0.8054 & 0.8596\\ 
 \end{tabular}
 \caption{Gibbs Accuracy for different $\beta$}
 \label{tab:gibbsbeta}
 \end{table}
 
 \textbf{f)}
-The implementation is in \texttt{gibbs\_run\_annealing.py} and the result is shown in \Cref{tab:gibbsanneal} for 
-$\beta = 0.1 + 0.1k_i$, where $k_i$ is the number of iterations.
+The implementation is in \texttt{gibbs\_run\_annealing.py} for $\beta = 0.1 + 0.1k_i$, where $k_i$ is 
+the number of iterations. I also tried another schedule that set $\beta = 0.1 + 0.05x^2$. Both results are shown 
+in \Cref{tab:gibbsanneal}.
 
-I also tried another schedule that set $\beta = $
+\begin{table}
+\centering
+\begin{tabular}{c|c|c}
+\textbf{$k$} & \textbf{$\beta = 0.1k+0.1$} & \textbf{$\beta=0.05k^2+0.1$} \\\hline
+1 & 0.6713 & 0.6411 \\\hline
+2 & 0.6961 & 0.6624\\\hline
+5 & 0.8004 & 0.8374 \\\hline
+10 & 0.8432 & 0.8592 \\\hline
+100 & 0.8607 &  0.8606\\\hline
+500 & 0.8613 &  0.8600\\\hline
+1000 & 0.8611 & 0.8600 \\\hline
+2000 & 0.8610 & 0.8600 \\
+\end{tabular}
+\caption{Gibbs Accuracy for different Annealing}
+\label{tab:gibbsanneal}
+\end{table}
 
 \subsection{Extra Credit: Gibbs Sampling for Minimum Bayes risk Decoding}
+\textbf{a)}
+
+When using 0-1 cost, the cost is non-zero only when $y_{1:T} = y'_{1:T}$, thus Equation (7) can be reduced to Equation (6) 
+as following
+\begin{align*}
+\hat y_{1:T} &= \argmin_{y_{1:T}} \sum_{y'_{1:T}}p(Y_{1:T} = y'_{1:T} | X_{1:T} = x_{1:T})\text{cost}(y_{1:T}, y'_{1:T}) \\
+&=\argmin_{y_{1:T}}\left[p(Y_{1:T} = y_{1:T} | X_{1:T} = x_{1:T}) + 0\cdot\sum_{y'_{1:T} \neq y_{1:T}}p(Y_{1:T} = y'_{1:T} | X_{1:T} = x_{1:T})\right]\\
+&=\argmin_{y_{1:T}}p(Y_{1:T} = y_{1:T} | X_{1:T} = x_{1:T})
+\end{align*}
+
+\textbf{b)}
+
+Idea: collect the states $s_1, s_2,\hdots,s_k$ from each iteration during Gibbs Sampling, these are samples of the random variable $Y_{1:T}$ given $X_{1:T} = x_{1:T}$. Thus we can approximate $p(Y_t = y|X_{1:T}=x_{1:T})$ by computing the ratio of states that having
+the t-th element to be $y$. The $y$ with highest ratio is then chosen as the result.
+\begin{align*}
+p(Y_t = y|X_{1:T}=x_{1:T}) &= \sum_{y_{-1}}p(Y_t = y, Y_{-t} = y_{-t}|X_{1:T} =x_{1:T})\\
+&=\frac{1}{k}\sum_{s_i, s_i[t] = y} 1
+\end{align*}
+
+I perform the experiment with $\beta = 1$, $\beta = 0.1k+0.1$ and $\beta = 0.1k^2+0.1$, the results for different $k$ is demonstrated in \Cref{tab:mbr}
+
+\begin{table}
+\centering
+\begin{tabular}{c|c|c|c}
+\textbf{$k$} &$\beta=1$ &\textbf{$\beta = 0.1k+0.1$} & \textbf{$\beta=0.1k^2+0.1$} \\\hline
+1 & & & \\\hline
+2 & & &\\\hline
+5 & & & \\\hline
+10 & & & \\\hline
+100 & &  &\\\hline
+500 & &  &\\\hline
+1000 &  & & \\\hline
+2000 &  & & \\
+\end{tabular}
+\caption{MBR Accuracy for different $\beta$}
+\label{tab:mbr}
+\end{table}
 \end{document}
