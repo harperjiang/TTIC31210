@@ -4,7 +4,7 @@ from ndnn.dataset import Batch
 
 
 class S2SDict:
-    def __init__(self, file):
+    def __init__(self, files):
         self.enc_dict = {}
         self.enc_inv_dict = []
         self.dec_dict = {}
@@ -20,22 +20,23 @@ class S2SDict:
         self.dec_inv_dict.append("<s>")
         self.dec_inv_dict.append("</s>")
 
-        f = open(file, "r")
-        for line in f.readlines():
-            sents = line.split("\t")
-            sent0 = sents[0].split()
-            sent1 = sents[1].split()
+        for file in files:
+            f = open(file, "r")
+            for line in f.readlines():
+                sents = line.split("\t")
+                sent0 = sents[0].split()
+                sent1 = sents[1].split()
 
-            for word in sent0:
-                if word not in self.enc_dict:
-                    self.enc_dict[word] = len(self.enc_dict)
-                    self.enc_inv_dict.append(word)
+                for word in sent0:
+                    if word not in self.enc_dict:
+                        self.enc_dict[word] = len(self.enc_dict)
+                        self.enc_inv_dict.append(word)
 
-            for word in sent1:
-                if word not in self.dec_dict:
-                    self.dec_dict[word] = len(self.dec_dict)
-                    self.dec_inv_dict.append(word)
-        f.close()
+                for word in sent1:
+                    if word not in self.dec_dict:
+                        self.dec_dict[word] = len(self.dec_dict)
+                        self.dec_inv_dict.append(word)
+            f.close()
 
 
 class LSTMDataSet:
