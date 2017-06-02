@@ -1,10 +1,10 @@
 import numpy as np
 
-from ndnn.rnn.lm_loss import LogLoss, HingeLoss, HingeLossOutput
-from ndnn.rnn.lstm_node import Attention
 from ndnn.graph import Graph
 from ndnn.init import Xavier, Zero
 from ndnn.node import Concat, Sigmoid, Add, Dot, Tanh, Mul, Collect, Embed, SoftMax, MDEmbed, Average, ArgMax
+from ndnn.rnn.lm_loss import LogLoss, HingeLoss, HingeLossOutput
+from ndnn.rnn.lstm_node import Attention
 
 
 class LSTMGraph(Graph):
@@ -116,7 +116,7 @@ class HingeGraph(LSTMGraph):
 
 
 class LSTMEncodeGraph(Graph):
-    def __init__(self, loss, update, enc_dict_size, dec_dict_size,hidden_dim):
+    def __init__(self, loss, update, enc_dict_size, dec_dict_size, hidden_dim):
         super().__init__(loss, update)
 
         self.enc_dict_size = enc_dict_size
@@ -272,19 +272,20 @@ class LSTMDecodeGraph(LSTMEncodeGraph):
 
 
 class BiLSTMEncodeGraph(Graph):
-    def __init__(self, loss, update, dict_size, hidden_dim):
+    def __init__(self, loss, update, enc_dict_size, dec_dict_size, hidden_dim):
         super().__init__(loss, update)
 
         half_dim = int(hidden_dim / 2)
 
-        self.dict_size = dict_size
+        self.enc_dict_size = enc_dict_size
+        self.dec_dict_size = dec_dict_size
         self.hidden_dim = hidden_dim
         self.half_dim = half_dim
 
         self.feh0 = self.input()
         self.fec0 = self.input()
 
-        self.feembed = self.param_of([dict_size, half_dim], Xavier())
+        self.feembed = self.param_of([enc_dict_size, half_dim], Xavier())
         self.fewf = self.param_of([2 * half_dim, half_dim], Xavier())
         self.febf = self.param_of([half_dim], Zero())
         self.fewi = self.param_of([2 * half_dim, half_dim], Xavier())
@@ -293,12 +294,12 @@ class BiLSTMEncodeGraph(Graph):
         self.febc = self.param_of([half_dim], Zero())
         self.fewo = self.param_of([2 * half_dim, half_dim], Xavier())
         self.febo = self.param_of([half_dim], Zero())
-        self.fev2c = self.param_of([half_dim, dict_size], Xavier())
+        self.fev2c = self.param_of([half_dim, enc_dict_size], Xavier())
 
         self.beh0 = self.input()
         self.bec0 = self.input()
 
-        self.beembed = self.param_of([dict_size, half_dim], Xavier())
+        self.beembed = self.param_of([enc_dict_size, half_dim], Xavier())
         self.bewf = self.param_of([2 * half_dim, half_dim], Xavier())
         self.bebf = self.param_of([half_dim], Zero())
         self.bewi = self.param_of([2 * half_dim, half_dim], Xavier())
@@ -307,9 +308,9 @@ class BiLSTMEncodeGraph(Graph):
         self.bebc = self.param_of([half_dim], Zero())
         self.bewo = self.param_of([2 * half_dim, half_dim], Xavier())
         self.bebo = self.param_of([half_dim], Zero())
-        self.bev2c = self.param_of([half_dim, dict_size], Xavier())
+        self.bev2c = self.param_of([half_dim, enc_dict_size], Xavier())
 
-        self.dembed = self.param_of([dict_size, hidden_dim], Xavier())
+        self.dembed = self.param_of([dec_dict_size, hidden_dim], Xavier())
         self.dwf = self.param_of([2 * hidden_dim, hidden_dim], Xavier())
         self.dbf = self.param_of([hidden_dim], Zero())
         self.dwi = self.param_of([2 * hidden_dim, hidden_dim], Xavier())
@@ -318,7 +319,7 @@ class BiLSTMEncodeGraph(Graph):
         self.dbc = self.param_of([hidden_dim], Zero())
         self.dwo = self.param_of([2 * hidden_dim, hidden_dim], Xavier())
         self.dbo = self.param_of([hidden_dim], Zero())
-        self.dv2c = self.param_of([hidden_dim, dict_size], Xavier())
+        self.dv2c = self.param_of([hidden_dim, dec_dict_size], Xavier())
 
         self.resetNum = len(self.nodes)
 
