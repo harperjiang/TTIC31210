@@ -38,6 +38,12 @@ class S2SDict:
                         self.dec_inv_dict.append(word)
             f.close()
 
+    def enc_translate(self, input):
+        pass
+
+    def dec_translate(self, input):
+        pass
+
 
 class LSTMDataSet:
     def __init__(self, vocab_dict, idx_dict, filename):

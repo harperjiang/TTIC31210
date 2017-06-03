@@ -14,6 +14,6 @@ batch_size = 50
 
 trainer = Trainer()
 
-lstm_graph = BiLSTMEncodeGraph(LogLoss(), Adam(eta=0.001, decay=0.99),
+lstm_graph = BiLSTMEncodeGraph(LogLoss(), Adam(eta=1.001, decay=0.99),
                                len(dict.enc_dict), len(dict.dec_dict), hidden_dim)
 trainer.train(100, 'part_whole', lstm_graph, train_ds, test_ds, test_ds, 50)

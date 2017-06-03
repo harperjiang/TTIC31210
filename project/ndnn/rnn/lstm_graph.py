@@ -429,8 +429,8 @@ class BiLSTMEncodeGraph(Graph):
 
 
 class BiLSTMDecodeGraph(BiLSTMEncodeGraph):
-    def __init__(self, loss, dict_size, hidden_dim, predict_len):
-        super().__init__(loss, None, dict_size, hidden_dim)
+    def __init__(self, loss, enc_dict_size, dec_dict_size, hidden_dim, predict_len):
+        super().__init__(loss, None, enc_dict_size, dec_dict_size, hidden_dim)
         self.predict_len = predict_len
 
     def build_graph(self, batch):
