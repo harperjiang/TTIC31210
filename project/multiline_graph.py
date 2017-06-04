@@ -1,6 +1,8 @@
+import numpy as np
+
 from ndnn.graph import Graph
 from ndnn.init import Xavier, Zero
-from ndnn.node import Concat, Sigmoid, Add, Dot, Tanh, Mul, Collect, Embed, SoftMax, MDEmbed, Average, ArgMax
+from ndnn.node import Concat, Sigmoid, Add, Dot, Tanh, Mul, Collect, Embed, SoftMax, Average
 
 
 class MultiLSTMEncodeGraph(Graph):
@@ -15,16 +17,10 @@ class MultiLSTMEncodeGraph(Graph):
         self.half_dim = half_dim
         self.num_line = num_line
 
-        self.feh0 = []
-        self.fec0 = []
-        self.beh0 = []
-        self.bec0 = []
-
-        for i in range(num_line):
-            self.feh0 += self.input()
-            self.fec0 += self.input()
-            self.beh0 += self.input()
-            self.bec0 += self.input()
+        self.feh0 = self.input()
+        self.fec0 = self.input()
+        self.beh0 = self.input()
+        self.bec0 = self.input()
 
         self.feembed = self.param_of([enc_dict_size, half_dim], Xavier())
         self.fewf = self.param_of([2 * half_dim, half_dim], Xavier())
@@ -110,56 +106,66 @@ class MultiLSTMEncodeGraph(Graph):
         return h_next, c_next
 
     def build_graph(self, batch):
-        enc_data = batch.data[0]
-        dec_data = batch.data[1]
+        enc_data = batch.data
+        dec_data = batch.expect
         self.reset()
-
-        bsize, enc_length = enc_data.shape
-        dec_length = dec_data.shape[1]
+        bsize = 1
+        enc_length = enc_data.shape[1]
+        dec_length = dec_data.shape[0]
 
         outputs = []
 
-        # Build Fwd Encode Graph
+        hcollect = []
+        ccollect = []
+
         self.feh0.value = np.zeros([bsize, self.half_dim])
         self.fec0.value = np.zeros([bsize, self.half_dim])
 
-        fh = self.feh0
-        fc = self.fec0
-        for idx in range(enc_length):
-            in_i = self.input()
-            in_i.value = enc_data[:, idx]  # Get value from batch
-            x = Embed(in_i, self.feembed)
-            fh, fc = self.fenc_lstm_cell(x, fh, fc)
-
-        # Build Bwd Encode Graph
         self.beh0.value = np.zeros([bsize, self.half_dim])
         self.bec0.value = np.zeros([bsize, self.half_dim])
 
-        bh = self.beh0
-        bc = self.bec0
-        for idx in range(enc_length):
-            in_i = self.input()
-            in_i.value = enc_data[:, enc_length - 1 - idx]  # Get value from batch
-            x = Embed(in_i, self.beembed)
-            bh, bc = self.benc_lstm_cell(x, bh, bc)
+        for line_idx in range(self.num_line):
+            # Build Fwd Encode Graph
+
+            fh = self.feh0
+            fc = self.fec0
+            for idx in range(enc_length):
+                in_i = self.input()
+                in_i.value = enc_data[line_idx, idx].reshape(1)  # Get value from batch
+                x = Embed(in_i, self.feembed)
+                fh, fc = self.fenc_lstm_cell(x, fh, fc)
+
+            # Build Bwd Encode Graph
+            bh = self.beh0
+            bc = self.bec0
+            for idx in range(enc_length):
+                in_i = self.input()
+                in_i.value = enc_data[line_idx, enc_length - 1 - idx].reshape(1)  # Get value from batch
+                x = Embed(in_i, self.beembed)
+                bh, bc = self.benc_lstm_cell(x, bh, bc)
+
+            h = Concat(fh, bh)
+            c = Concat(fc, bc)
+            hcollect.append(h)
+            ccollect.append(c)
 
         # Build Decode Graph
-        h = Concat(fh, bh)
-        c = Concat(fc, bc)
+        h = Average(Collect(hcollect))
+        c = Average(Collect(ccollect))
 
         self.encoded_h = h
         self.encoded_c = c
 
         for idx in range(dec_length - 1):
             in_i = self.input()
-            in_i.value = dec_data[:, idx]
+            in_i.value = dec_data[idx].reshape(1)
             x = Embed(in_i, self.dembed)
             h, c = self.dec_lstm_cell(x, h, c)
             out_i = SoftMax(Dot(h, self.dv2c))
             outputs.append(out_i)
 
         self.output(Collect(outputs))
-        self.expect(dec_data[:, 1:])
+        self.expect(dec_data[1:])
 
     def encode_result(self):
         # return np.concatenate((self.encoded_h.value, self.encoded_c.value), axis=1)
