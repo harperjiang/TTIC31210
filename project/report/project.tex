@@ -24,7 +24,7 @@
 \maketitle
 
 \begin{abstract}
-The recurrent neural network (RNN) based encoder-decoder architecture has been widely used for various sequence-to-sequence translation tasks such as natural language translation and grammar inference, and has achieved significant success on these tasks. In this project, we attempt to use this architecture to infer common patterns from multiple inputs, which is a crucial task for information extraction and management. This leads to two new types of tasks: combinations and summarization. In combination task, we train the encoder-decoder with known patterns and attempt to use it to recognize the combination of these patterns. In summarization task, we define some rules to infer a common pattern from multiple records and use encoder-decoder to learn these rules. Preliminary results show that existing architecture does not fit these applications and new architectures are required.
+The recurrent neural network (RNN) based encoder-decoder architecture has been widely used for various sequence-to-sequence translation tasks such as natural language translation and grammar inference, and has achieved significant success on these tasks. In this project, we attempt to use this architecture to infer common patterns from multiple inputs, which is a crucial task for information extraction and management. This leads to two new types of tasks: combinations and summarization. In combination task, we train the encoder-decoder with known patterns and attempt to use it to recognize the combination of these patterns. In summarization task, we define some rules to infer a common pattern from multiple records and use encoder-decoder to learn these rules. Preliminary results show that existing architecture does NOT fit these applications and new architectures are required.
 \end{abstract}
 
 \section{Introduction}
@@ -34,9 +34,10 @@ In this project, we explore the possibility of using RNN-based encoder-decoder a
 
 A potential challenge of using RNN encoder for pattern extraction is constructing an efficient training set. Unlike in the case of natural language and grammar, the pattern does not have a closed, well-defined domain. The vocabularies of pattern can be arbitrary combinations of alphabet, numbers and symbols. There's also no ``grammar'' governing these vocabularies. Thus the attempt to construct a complete training set that covers all possible patterns is infeasible. Instead, we try to attack the problem from different directions.
 
-In this project, we experiment with two approaches. First, we attempt to imitate human's ability to recognize some common pattern, e.g., date, time and ip address. We train the encoder-decoder model with these common patterns, and explore the model's ability to recognize combination of these patterns. This method will allow the model to remember some patterns and recognize them when later encounter these pattern again.
+In this project, we experiment with two approaches. First, we attempt to imitate human's ability to recognize some common pattern, e.g., date, time and ip address. We train the encoder-decoder model with these common patterns, and explore the model's ability to recognize combination of these patterns. This method will allow the model to remember some patterns and recognize them when later encounter these pattern again. Second, we develop an architecture allowing multiple inputs to be encoded into a single state, and use this model to train on a dataset containing inputs and patterns inferred from them, in order to evaluate the ability of RNN-based encoder-decoder on directly inferring patterns from multiple inputs. In the experiment, we notice that none of these methods give a satisfied result on the topic, which implies that traditional RNN-based encoder-decoder architecture is not suitable for such kind of tasks and new architecture is needed. 
 
-Second, we train
+The remainder of the paper is organized as following. \Cref{sec:background} introduce the pattern extraction problem and RNN-based encoder-decoder structure, including previous works. \Cref{sec:pernn} describes the method we experiment with in this report. \Cref{sec:experiment} demonstrates the experiment result and \Cref{sec:conclusion} conclude our finding.
+
 \begin{figure}
 \centering
 \begin{tikzpicture}
@@ -53,18 +54,18 @@ Second, we train
 \label{fig:pattern}
 \end{figure}
 
-\section{Background}
+\section{Background}\label{sec:background}
 Long Short-Term Memory (\cite{lstm_1997})
  
 In \cite{grammar_2014}, the authors demonstrated that LSTM-based auto encoders can be used to infer tree-like structures such as grammars from sequential input.
+\section{Pattern Extraction with RNN}\label{sec:pernn}
+\subsection{Pattern Combination}\label{sec:combo}
 
-\section{Pattern Combination}
+\subsection{Pattern Inferrence}\label{sec:pattern}
 
-\section{Pattern Summarization}
+\section{Experiment}\label{sec:experiment}
 
-\section{Experiment}
-
-\section{Conclusion}
+\section{Conclusion}\label{sec:conclusion}
 
 \bibliographystyle{iclr2016_conference}
 \bibliography{ref}
