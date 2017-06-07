@@ -1,0 +1,71 @@
+%%This is a very basic article template.
+%%There is just one section and two subsections.
+\documentclass{article}
+
+\usepackage{iclr2016_conference,times}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{parskip}
+\usepackage{subcaption}
+\usepackage{xcolor} 
+\usepackage{cleveref}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{graphicx}
+\newcommand{\indep}{\rotatebox[origin=c]{90}{$\models$}}
+\DeclareMathOperator*{\argmin}{argmin}
+\title{\LARGE{Pattern as a Foreign Language} \\ \large{TTIC 31210 Project Report \\ Spring 2017}}
+
+\author{Hao Jiang \\ The University of Chicago}
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+The recurrent neural network (RNN) based encoder-decoder architecture has been widely used for various sequence-to-sequence translation tasks such as natural language translation and grammar inference, and has achieved significant success on these tasks. In this project, we attempt to use this architecture to infer common patterns from multiple inputs, which is a crucial task for information extraction and management. This leads to two new types of tasks: combinations and summarization. In combination task, we train the encoder-decoder with known patterns and attempt to use it to recognize the combination of these patterns. In summarization task, we define some rules to infer a common pattern from multiple records and use encoder-decoder to learn these rules. Preliminary results show that existing architecture does not fit these applications and new architectures are required.
+\end{abstract}
+
+\section{Introduction}
+Recurrent neural network based encoder-decoder architecture has recently been widely adopted in various tasks such as neural machine translation (\cite{ntran_2013, ntran_2014}), image captioning (\cite{icap_2015} and grammar inference (\cite{grammar_2014}). These tasks can all be viewed as a translation between source and target domains using encoding-decoding process. First, an encoder is employed to convert the input to a single vector, which is supposed to contain a summary of the input. With that as input, a decoder is then used to generate an output belonging to the destination domain from the encoded result. The entire encoder-decoder model is trained on input pairs of source-target training data to maximize the probability of correct translation.
+
+In this project, we explore the possibility of using RNN-based encoder-decoder architecture to do pattern extraction. Pattern extraction infers common patterns from multiple records, and extract sub-components from the records accordingly. \Cref{fig:pattern} demonstrates several lines of Java application logs and the pattern inferred from them. Pattern extraction allows in-depth understanding of the data's nature, enabling more efficient data compression and accurate data analysis. Previous methods of pattern extraction developed by \cite{dirt_2008} use a rule-based method to iteratively extract common words from records, which is inefficient when dealing with large dataset. In addition, this method does not learn from past dataset to speed up future processing. We plan to use RNN to address these problems.
+
+A potential challenge of using RNN encoder for pattern extraction is constructing an efficient training set. Unlike in the case of natural language and grammar, the pattern does not have a closed, well-defined domain. The vocabularies of pattern can be arbitrary combinations of alphabet, numbers and symbols. There's also no ``grammar'' governing these vocabularies. Thus the attempt to construct a complete training set that covers all possible patterns is infeasible. Instead, we try to attack the problem from different directions.
+
+In this project, we experiment with two approaches. First, we attempt to imitate human's ability to recognize some common pattern, e.g., date, time and ip address. We train the encoder-decoder model with these common patterns, and explore the model's ability to recognize combination of these patterns. This method will allow the model to remember some patterns and recognize them when later encounter these pattern again.
+
+Second, we train
+\begin{figure}
+\centering
+\begin{tikzpicture}
+\node[text width=12cm, draw=lightgray, fill=orange!20] (a){
+14:23:01.045 [main] DEBUG o.h.d.s.DefaultService - Synchronizing \\
+14:23:48.656 [Thread] DEBUG o.h.d.storage.StorageService - Persisting Data \\
+14:24:05.656 [monitor] WARN o.h.d.storage.StorageService - Invalid Input \\
+};
+\node[below of =a,draw=lightgray,fill=green!30,xshift=-2.4cm](b){Timestamp [Thread Name] Level Source - Content};
+\node[left of =a, xshift = -6cm]{Log Data};
+\node[left of = b,xshift=-3.5cm]{Pattern};
+\end{tikzpicture}
+\caption{Application Log and extracted Pattern}
+\label{fig:pattern}
+\end{figure}
+
+\section{Background}
+Long Short-Term Memory (\cite{lstm_1997})
+ 
+In \cite{grammar_2014}, the authors demonstrated that LSTM-based auto encoders can be used to infer tree-like structures such as grammars from sequential input.
+
+\section{Pattern Combination}
+
+\section{Pattern Summarization}
+
+\section{Experiment}
+
+\section{Conclusion}
+
+\bibliographystyle{iclr2016_conference}
+\bibliography{ref}
+\end{document}

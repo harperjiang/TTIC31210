@@ -1,0 +1,60 @@
+\begin{thebibliography}{6}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Cho et~al.(2014)Cho, van Merrienboer, Gulcehre, Bahdanau, Bougares,
+  Schwenk, and Bengio]{ntran_2014}
+Cho, Kyunghyun, van Merrienboer, Bart, Gulcehre, Caglar, Bahdanau, Dzmitry,
+  Bougares, Fethi, Schwenk, Holger, and Bengio, Yoshua.
+\newblock Learning phrase representations using rnn encoder--decoder for
+  statistical machine translation.
+\newblock In \emph{Proceedings of the 2014 Conference on Empirical Methods in
+  Natural Language Processing (EMNLP)}, pp.\  1724--1734, Doha, Qatar, October
+  2014. Association for Computational Linguistics.
+\newblock URL \url{http://www.aclweb.org/anthology/D14-1179}.
+
+\bibitem[Fisher et~al.(2008)Fisher, Walker, Zhu, and White]{dirt_2008}
+Fisher, Kathleen, Walker, David, Zhu, Kenny~Q., and White, Peter.
+\newblock From dirt to shovels: Fully automatic tool generation from ad hoc
+  data.
+\newblock In \emph{Proceedings of the 35th Annual ACM SIGPLAN-SIGACT Symposium
+  on Principles of Programming Languages}, POPL '08, pp.\  421--434, New York,
+  NY, USA, 2008. ACM.
+\newblock ISBN 978-1-59593-689-9.
+\newblock \doi{10.1145/1328438.1328488}.
+\newblock URL \url{http://doi.acm.org/10.1145/1328438.1328488}.
+
+\bibitem[Hermann \& Blunsom(2014)Hermann and Blunsom]{ntran_2013}
+Hermann, Karl~Moritz and Blunsom, Phil.
+\newblock A simple model for learning multilingual compositional semantics.
+\newblock \emph{Proceedings of the Second International Conference on Learning
+  Representations (ICLR 2014)}, 2014.
+
+\bibitem[Hochreiter \& Schmidhuber(1997)Hochreiter and Schmidhuber]{lstm_1997}
+Hochreiter, Sepp and Schmidhuber, JÃŒrgen.
+\newblock Long short-term memory.
+\newblock \emph{Neural Computation}, 9\penalty0 (8):\penalty0 1735--1780, 1997.
+\newblock \doi{10.1162/neco.1997.9.8.1735}.
+\newblock URL \url{http://dx.doi.org/10.1162/neco.1997.9.8.1735}.
+
+\bibitem[Karpathy \& Li(2015)Karpathy and Li]{icap_2015}
+Karpathy, Andrej and Li, Fei{-}Fei.
+\newblock Deep visual-semantic alignments for generating image descriptions.
+\newblock In \emph{{IEEE} Conference on Computer Vision and Pattern
+  Recognition, {CVPR} 2015, Boston, MA, USA, June 7-12, 2015}, pp.\
+  3128--3137, 2015.
+\newblock \doi{10.1109/CVPR.2015.7298932}.
+\newblock URL \url{https://doi.org/10.1109/CVPR.2015.7298932}.
+
+\bibitem[Vinyals et~al.(2014)Vinyals, Kaiser, Koo, Petrov, Sutskever, and
+  Hinton]{grammar_2014}
+Vinyals, Oriol, Kaiser, Lukasz, Koo, Terry, Petrov, Slav, Sutskever, Ilya, and
+  Hinton, Geoffrey~E.
+\newblock Grammar as a foreign language.
+\newblock \emph{CoRR}, abs/1412.7449, 2014.
+\newblock URL \url{http://arxiv.org/abs/1412.7449}.
+
+\end{thebibliography}
