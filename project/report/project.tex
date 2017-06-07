@@ -13,9 +13,17 @@
 \usepackage{pgfplots}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
+\usepackage{listings}
 \usepackage{graphicx}
 \newcommand{\indep}{\rotatebox[origin=c]{90}{$\models$}}
 \DeclareMathOperator*{\argmin}{argmin}
+
+\lstset{
+  basicstyle=\itshape,
+  xleftmargin=3em,
+  literate={->}{$\rightarrow$}{2}
+}
+
 \title{\LARGE{Pattern as a Foreign Language} \\ \large{TTIC 31210 Project Report \\ Spring 2017}}
 
 \author{Hao Jiang \\ The University of Chicago}
@@ -111,15 +119,44 @@ decell/.style={draw=lightgray,fill=orange!30, minimum width=1cm, minimum height=
 \end{figure}
 
 
-\cite{s2snn_2014} adopts Long Short-Term Memory (LSTM, \cite{lstm_1997}) in this architecture for machine translation. Later, variants of this network such as Attention (\cite{attention_2015}) are also proposed for an improved accuracy. In \cite{grammar_2014}, the authors demonstrated that LSTM-based auto encoders can be used to infer tree-like structures such as grammars from sequential input, which also inspires us to propose the idea described in this report.
+\cite{s2snn_2014} adopts Long Short-Term Memory (LSTM, \cite{lstm_1997}) in this architecture for machine translation. Later, variants of this network including bi-directional LSTM and Attention (\cite{attention_2015}) are also proposed for an improved accuracy. In \cite{grammar_2014}, the authors demonstrated that LSTM-based auto encoders can be used to infer tree-like structures such as grammars from sequential input, which also inspires us to propose the idea described in this report.
 
 \section{Pattern Extraction with RNN}\label{sec:pernn}
+In this report, we experiment with two methods that utilizes RNN-base encoder-decoder for pattern extraction task.
+
+\subsection{Domain Language for Pattern Definition}  
+We use a simple domain language which is similar to \cite{dirt_2008}  to define valid patterns. The context-free grammar of this language is shown as following.
+\begin{lstlisting}
+pattern -> union | seq | term
+union -> <UNION> (pattern <SEP>)* pattern </UNION>
+seq -> (pattern <SEP>)* pattern
+term -> <NUM>
+term -> <WORD>
+term -> {all valid symbols in input}
+\end{lstlisting}
+The terminal symbols include all symbols appears in the input, as well as abstract terminals ``\textless NUM\textgreater'' and ``\textless WORD\textgreater'', which represent arbitrary consecutive digits and alphabetic characters correspondingly. A union is a collection of patterns allowing exactly one child to appear. It is an equivalence to ``$\vert$'' in regular expression. A sequence is a list of patterns that appear consecutively.
+
 \subsection{Pattern Combination}\label{sec:combo}
 
-\subsection{Pattern Inferrence}\label{sec:pattern}
+In pattern combination, we train a model with short, simple patterns and test the final model of the ability to recognize the combination of these patterns.
 
+
+\subsection{Direct Pattern Inference}\label{sec:pattern}
+
+In direct pattern inference, we build a LSTM-based encoder-decoder architecture to accept multiple inputs and generate one output. This architecture is shown in \Cref{fig:dpi_lstm}
+
+\begin{figure}
+\centering
+\begin{tikzpicture}
+
+\end{tikzpicture}
+\caption{Direct Pattern Inference with RNN}
+\label{fig:dpi_lstm}
+\end{figure}
 \section{Experiment}\label{sec:experiment}
+\subsection{Pattern Combination}
 
+\subsection{Direct Pattern Inference}
 \section{Conclusion}\label{sec:conclusion}
 
 \bibliographystyle{iclr2016_conference}
