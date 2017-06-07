@@ -1,12 +1,19 @@
-\begin{thebibliography}{6}
+\begin{thebibliography}{12}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
   \providecommand{\doi}[1]{doi: #1}\else
   \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
 
+\bibitem[Bahdanau et~al.(2015)Bahdanau, Cho, and Bengio]{attention_2015}
+Bahdanau, Dzmitry, Cho, Kyunghyun, and Bengio, Yoshua.
+\newblock Neural machine translation by jointly learning to align and
+  translate.
+\newblock \emph{Proceedings of the Third International Conference on Learning
+  Representations (ICLR 2015)}, abs/1409.0473, 2015.
+
 \bibitem[Cho et~al.(2014)Cho, van Merrienboer, Gulcehre, Bahdanau, Bougares,
-  Schwenk, and Bengio]{ntran_2014}
+  Schwenk, and Bengio]{rnned_2014}
 Cho, Kyunghyun, van Merrienboer, Bart, Gulcehre, Caglar, Bahdanau, Dzmitry,
   Bougares, Fethi, Schwenk, Holger, and Bengio, Yoshua.
 \newblock Learning phrase representations using rnn encoder--decoder for
@@ -15,6 +22,11 @@ Cho, Kyunghyun, van Merrienboer, Bart, Gulcehre, Caglar, Bahdanau, Dzmitry,
   Natural Language Processing (EMNLP)}, pp.\  1724--1734, Doha, Qatar, October
   2014. Association for Computational Linguistics.
 \newblock URL \url{http://www.aclweb.org/anthology/D14-1179}.
+
+\bibitem[Cloudera(2017)]{recbreaker}
+Cloudera.
+\newblock {RecordBreaker}, 2017.
+\newblock URL \url{https://www.cloudera.com}.
 
 \bibitem[Fisher et~al.(2008)Fisher, Walker, Zhu, and White]{dirt_2008}
 Fisher, Kathleen, Walker, David, Zhu, Kenny~Q., and White, Peter.
@@ -49,12 +61,39 @@ Karpathy, Andrej and Li, Fei{-}Fei.
 \newblock \doi{10.1109/CVPR.2015.7298932}.
 \newblock URL \url{https://doi.org/10.1109/CVPR.2015.7298932}.
 
-\bibitem[Vinyals et~al.(2014)Vinyals, Kaiser, Koo, Petrov, Sutskever, and
+\bibitem[{PADS Project}(2017)]{pads}
+{PADS Project}.
+\newblock Pads project, 2017.
+\newblock URL \url{http://www.padsproj.org}.
+
+\bibitem[Rumelhart et~al.(1988)Rumelhart, Hinton, and Williams]{rnn_1988}
+Rumelhart, David~E., Hinton, Geoffrey~E., and Williams, Ronald~J.
+\newblock Neurocomputing: Foundations of research.
+\newblock chapter Learning Representations by Back-propagating Errors, pp.\
+  696--699. MIT Press, Cambridge, MA, USA, 1988.
+\newblock ISBN 0-262-01097-6.
+\newblock URL \url{http://dl.acm.org/citation.cfm?id=65669.104451}.
+
+\bibitem[Sutskever et~al.(2014)Sutskever, Vinyals, and Le]{s2snn_2014}
+Sutskever, Ilya, Vinyals, Oriol, and Le, Quoc~V.
+\newblock Sequence to sequence learning with neural networks.
+\newblock In \emph{Proceedings of the 27th International Conference on Neural
+  Information Processing Systems}, NIPS'14, pp.\  3104--3112, Cambridge, MA,
+  USA, 2014. MIT Press.
+\newblock URL \url{http://dl.acm.org/citation.cfm?id=2969033.2969173}.
+
+\bibitem[Vinyals et~al.(2015)Vinyals, Kaiser, Koo, Petrov, Sutskever, and
   Hinton]{grammar_2014}
 Vinyals, Oriol, Kaiser, Lukasz, Koo, Terry, Petrov, Slav, Sutskever, Ilya, and
   Hinton, Geoffrey~E.
 \newblock Grammar as a foreign language.
-\newblock \emph{CoRR}, abs/1412.7449, 2014.
-\newblock URL \url{http://arxiv.org/abs/1412.7449}.
+\newblock \emph{Advances in Neural Information Processing Systems 28 (NIPS
+  2015)}, 2015.
+
+\bibitem[Werbos(1990)]{rnn_1990}
+Werbos, Paul~J.
+\newblock Backpropagation through time: What it does and how to do it.
+\newblock In \emph{ Proceedings of the IEEE 78(10)}, pp.\  1550 -- 1560,
+  1990.
 
 \end{thebibliography}
