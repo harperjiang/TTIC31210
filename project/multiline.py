@@ -15,4 +15,4 @@ trainer = Trainer()
 
 lstm_graph = MultiLSTMEncodeGraph(LogLoss(), Adam(eta=0.001, decay=0.99),
                                   len(test_ds.enc_dict), len(test_ds.dec_dict), hidden_dim, 10)
-trainer.train(100, 'multiline', lstm_graph, train_ds, test_ds, test_ds, 1)
+trainer.train(100, 'mline', lstm_graph, train_ds, test_ds, test_ds, 1)

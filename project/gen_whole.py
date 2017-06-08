@@ -20,60 +20,30 @@ def breakString(str):
     return " ".join([c for c in str])
 
 
-def wordNum(copy):
+def whole(copy):
     for i in range(copy):
         numWord = random.randint(4, 7)
+        numWord2 = random.randint(3, 6)
         numNum = random.randint(5, 8)
+        numNum2 = random.randint(4, 6)
 
-        yield "<s> %s </s>\t<s> <WORD> <NUM> </s>" % (breakString(randStr(numWord) + randNum(numNum)))
-
-
-def wordDashNum(copy):
-    for i in range(copy):
-        numWord = random.randint(4, 7)
-        numNum = random.randint(5, 8)
-        yield "<s> %s - %s </s>\t<s> <WORD> - <NUM> </s>" % (
-            breakString(randStr(numWord)), breakString(randNum(numNum)))
-
-
-def wordDashWord(copy):
-    for i in range(copy):
-        numWord = random.randint(4, 7)
-        numWord2 = random.randint(5, 8)
-
-        yield "<s> %s - %s </s>\t<s> <WORD> - <WORD> </s>" % (
-            breakString(randStr(numWord)), breakString(randStr(numWord2)))
-
-
-def numDashNum(copy):
-    for i in range(copy):
-        numNum = random.randint(4, 7)
-        numNum2 = random.randint(5, 8)
-        yield "<s> %s - %s </s>\t<s> <NUM> - <NUM> </s>" % (breakString(randNum(numNum)), breakString(randNum(numNum2)))
+        yield "<s> %s - %s - %s - %s </s>\t<s> <WORD> - <WORD> - <NUM> - <NUM> </s>" % (
+            breakString(randStr(numWord)), breakString(randStr(numWord2)), breakString(randNum(numNum)),
+            breakString(randNum(numNum2)))
 
 
 # If the group contains more than 3 different types, <WORD> will
 # be used. Otherwise, a union will be used
 
-copy = 10000
-r1 = 0.3
-r2 = 0.7
+copy = 1000
 
-output = "data/part.train"
+output = "data/whole.test"
 
 f = open(output, "w")
 
 random.seed(time())
 
-for i in wordNum(copy):
+for i in whole(copy):
     f.write("%s\n" % (i))
 
-for i in wordDashNum(copy):
-    f.write("%s\n" % (i))
-
-for i in wordDashWord(copy):
-    f.write("%s\n" % (i))
-
-for i in numDashNum(copy):
-    f.write("%s\n" % (i))
 f.close()

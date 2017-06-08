@@ -119,10 +119,10 @@ decell/.style={draw=lightgray,fill=orange!30, minimum width=1cm, minimum height=
 \end{figure}
 
 
-\cite{s2snn_2014} adopts Long Short-Term Memory (LSTM, \cite{lstm_1997}) in this architecture for machine translation. Later, variants of this network including bi-directional LSTM and Attention (\cite{attention_2015}) are also proposed for an improved accuracy. In \cite{grammar_2014}, the authors demonstrated that LSTM-based auto encoders can be used to infer tree-like structures such as grammars from sequential input, which also inspires us to propose the idea described in this report.
+\cite{s2snn_2014} adopts Long Short-Term Memory (LSTM, \cite{lstm_1997}) in this architecture for machine translation. Later, variants of this network including bi-directional LSTM and Attention (\cite{attention_2015}) are also proposed for an improved accuracy. In \cite{grammar_2014}, the authors demonstrated that LSTM-based auto encoders can be used to infer tree-like structures such as grammars from sequential input, which also inspires us to propose the idea described in this report. 
 
 \section{Pattern Extraction with RNN}\label{sec:pernn}
-In this report, we experiment with two methods that utilizes RNN-base encoder-decoder for pattern extraction task.
+In this report, we experiment with two methods that utilizes LSTM-base encoder-decoder for pattern extraction task.
 
 \subsection{Domain Language for Pattern Definition}  
 We use a simple domain language which is similar to \cite{dirt_2008}  to define valid patterns. The context-free grammar of this language is shown as following.
@@ -138,8 +138,19 @@ The terminal symbols include all symbols appears in the input, as well as abstra
 
 \subsection{Pattern Combination}\label{sec:combo}
 
-In pattern combination, we train a model with short, simple patterns and test the final model of the ability to recognize the combination of these patterns.
+In pattern combination, we train a model on short, simple patterns and test the model on the ability to recognize the combination of these patterns. In training set, we use patterns containing two or three terms listed below. These patterns contains only two abstract terms and a symbol ``-''
+\begin{lstlisting}
+<WORD> <NUM>
+<WORD> - <WORD>
+<WORD> - <NUM>
+<NUM> - <NUM> 
+\end{lstlisting}
 
+We then use the trained model to test a composite pattern 
+\begin{lstlisting}
+<WORD> - <WORD> <NUM> - <NUM>
+\end{lstlisting}
+We choose the training pattern and the test pattern so that all transitions in the composite pattern can be found in the training set. Intuitively, this will allow the model to learn these transitions and infer the composite pattern from test input.
 
 \subsection{Direct Pattern Inference}\label{sec:pattern}
 
@@ -147,8 +158,36 @@ In direct pattern inference, we build a LSTM-based encoder-decoder architecture 
 
 \begin{figure}
 \centering
-\begin{tikzpicture}
+\begin{tikzpicture}[
+encoder/.style={draw=lightgray,fill=green!30,minimum height=0.6cm, minimum width=1.5cm},
+decoder/.style={draw=lightgray,fill=orange!30,minimum height=0.6cm,minimum width=1.5cm},
+avg/.style={draw=lightgray,fill=red!10,minimum height=0.6cm,minimum width=3.5cm,rotate=270}
+]
+\node[encoder](e1) at (0,0) {Encoder 1};
+\node[encoder](e2) at (0,-0.7) {Encoder 2};
+\node[encoder](e3) at (0,-1.4) {Encoder 3};
+\node at (0,-2.1)(e4) {$\hdots$};
+\node[encoder](en) at (0,-2.8) {Encoder n};
+\node[avg](avg) at(2,-1.4) {Average};
+\node[decoder](de) at (4,-1.4) {Decoder};
 
+\node[left of = e1,xshift=-1cm](i1) {input 1};
+\draw[->] (i1) to (e1.west);
+\node[left of = e2,xshift=-1cm](i2) {input 2};
+\draw[->] (i2) to (e2.west);
+\node[left of = e3,xshift=-1cm](i3) {input 3};
+\draw[->] (i3) to (e3.west);
+\node[left of = e4,xshift=-1cm](i4) {$\hdots$};
+\node[left of = en,xshift=-1cm](in) {input n};
+\draw[->] (in) to (en.west);
+
+\draw[->](e1.east) to ([yshift=1.4cm]avg.south);
+\draw[->](e2.east) to ([yshift=0.7cm]avg.south);
+\draw[->](e3.east) to (avg.south);
+\draw[->](en.east) to ([yshift=-1.4cm]avg.south);
+
+\draw[->](avg.north) to (de.west);
+ 
 \end{tikzpicture}
 \caption{Direct Pattern Inference with RNN}
 \label{fig:dpi_lstm}

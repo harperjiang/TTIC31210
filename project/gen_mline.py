@@ -28,11 +28,11 @@ def breakString(str):
 # If the group contains more than 3 different types, <WORD> will
 # be used. Otherwise, a union will be used
 
-copy = 1000
+copy = 10000
 r1 = 0.3
 r2 = 0.7
 
-output = "data/ml.test"
+output = "data/ml.train"
 
 f = open(output, "w")
 

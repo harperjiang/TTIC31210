@@ -9,7 +9,7 @@ dict = S2SDict(["data/part.train"])
 train_ds = S2SDataSet(dict.enc_dict, dict.dec_dict, "data/part.train")
 test_ds = S2SDataSet(dict.enc_dict, dict.dec_dict, "data/part.test")
 
-hidden_dim = 200
+hidden_dim = 100
 batch_size = 50
 
 trainer = Trainer()
