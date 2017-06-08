@@ -74,6 +74,7 @@ Traditional feed-forward neural network can only process input of fixed size, wh
 \begin{figure}
 \centering
 \begin{tikzpicture}[
+scale=0.7,every node/.style={scale=0.7},
 encell/.style={draw=lightgray,fill=green!30, minimum width=1cm, minimum height=0.6cm},
 decell/.style={draw=lightgray,fill=orange!30, minimum width=1cm, minimum height=0.6cm}
 ]
@@ -154,11 +155,13 @@ We choose the training pattern and the test pattern so that all transitions in t
 
 \subsection{Direct Pattern Inference}\label{sec:pattern}
 
-In direct pattern inference, we build a LSTM-based encoder-decoder architecture to accept multiple inputs and generate one output. This architecture is shown in \Cref{fig:dpi_lstm}
+In direct pattern inference, we need to accept multiple inputs and generate one output. We expand LSTM-based encoder-decoder architecture to 2-dimension by designate one LSTM encoder to each input. The encoded results from all encoder are then averaged and fed into the decoder for decoding. As in all RNN architectures, all encoders share the same parameters. The architecture is demonstrated in \Cref{fig:dpi_lstm}.
 
+The training set and test set are comprised of groups of input-pattern pair. Each group contains 10 input strings and one pattern string. Each input string is a sequence of 3 characters (header) and 6 numbers, e.g., ABC123456. In some groups, all inputs share the same header, assume it is XYZ. The model is supposed to infer a pattern ``XYZ \textless NUM\textgreater". In some groups, each input has distinct header, and the model is supposed to infer pattern ``\textless WORD\textgreater \textless NUM\textgreater''
 \begin{figure}
 \centering
 \begin{tikzpicture}[
+scale=0.7,every node/.style={scale=0.7},
 encoder/.style={draw=lightgray,fill=green!30,minimum height=0.6cm, minimum width=1.5cm},
 decoder/.style={draw=lightgray,fill=orange!30,minimum height=0.6cm,minimum width=1.5cm},
 avg/.style={draw=lightgray,fill=red!10,minimum height=0.6cm,minimum width=3.5cm,rotate=270}
@@ -193,11 +196,16 @@ avg/.style={draw=lightgray,fill=red!10,minimum height=0.6cm,minimum width=3.5cm,
 \label{fig:dpi_lstm}
 \end{figure}
 \section{Experiment}\label{sec:experiment}
+We generate random string and numbers following the patterns described in previous section as training and test set. All experiments are conducted with bi-directional LSTM with hidden dimension 200 (100 for each direction). We use Adam for parameter update and set the learning rate to 0.001.
 \subsection{Pattern Combination}
 
-\subsection{Direct Pattern Inference}
-\section{Conclusion}\label{sec:conclusion}
+We train the model on dataset containing only simple patterns, and test the model on composite patterns. Not surprisingly, the model can recognize all simple patterns and quickly achieve a training accuracy of 100\%. However, the test accuracy is always around 52\%. Considering the small vocabulary we maintain in this experiment, this result is almost worthless. To inspect the problem, we generate decoded result for some inputs. For input string like ``ABC-DEF32-324", expected output is ``\textless WORD\textgreater -\textless WORD \textgreater \textless NUM \textgreater -\textless NUM\textgreater'', while our model only generate ``\textless WORD\textgreater -\textless NUM \textgreater''. A possible reason for such error is that LSTM model can only recognize those simple patterns when they appear at the beginning of the sentence, but failed to recognize them when they appear in the middle. 
 
+\subsection{Direct Pattern Inference}
+We train the model on randomly generated training set of 10000 group and test set of 1000 groups, with half of the group containing identical headers and the other half distinct headers. To our surprise, the training does not converge at all and the test accuracy is always below 5\%. It turns out that a simple average of encoded state from separated input failed to capture a good summary of the input group.
+
+\section{Conclusion}\label{sec:conclusion}
+In this report, we demonstrate our attempts of using LSTM-based encoder-decoder model to  pattern extraction from textual data. Our preliminary results shows that the traditional architecture that are widely adopted by previous researchers is not a good fit for pattern extraction task. We will continue work on building new architecture for this task in the future research.
 \bibliographystyle{iclr2016_conference}
 \bibliography{ref}
 \end{document}
